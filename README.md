@@ -19,13 +19,22 @@ A macOS menu bar app that ticks your earnings in real time — watch your salary
 
 ## Installation
 
-### Homebrew (planned)
+### Homebrew
+
+The cask source lives in [`Casks/paytick.rb`](Casks/paytick.rb). Once the v1.0.0 GitHub release (with `PayTick-1.0.0.dmg` attached) is published:
 
 ```bash
-brew install yueseqaz/tap/paytick
+brew install --cask https://raw.githubusercontent.com/yueseqaz/PayTick/main/Casks/paytick.rb
 ```
 
-> Homebrew cask distribution is in preparation. For now, build from source below.
+To upgrade after a new release:
+
+```bash
+brew uninstall --cask paytick
+brew install --cask https://raw.githubusercontent.com/yueseqaz/PayTick/main/Casks/paytick.rb
+```
+
+> The cask's `sha256` must be updated to match each release's DMG. See [`Casks/paytick.rb`](Casks/paytick.rb).
 
 ### Build from source
 
