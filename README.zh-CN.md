@@ -23,20 +23,17 @@
 
 ### Homebrew
 
-cask 源文件在 [`Casks/paytick.rb`](Casks/paytick.rb)。等 v1.0.0 GitHub release（附带 `PayTick-1.0.0.dmg`）发布后：
-
 ```bash
 brew install --cask https://raw.githubusercontent.com/yueseqaz/PayTick/main/Casks/paytick.rb
 ```
 
-新版本发布后升级：
+升级到新版本：
 
 ```bash
-brew uninstall --cask paytick
-brew install --cask https://raw.githubusercontent.com/yueseqaz/PayTick/main/Casks/paytick.rb
+brew uninstall --cask paytick && brew install --cask https://raw.githubusercontent.com/yueseqaz/PayTick/main/Casks/paytick.rb
 ```
 
-> cask 的 `sha256` 字段每次 release 后由 GitHub Actions 自动填回，见 [`Casks/paytick.rb`](Casks/paytick.rb)。
+cask 的 `version` 和 `sha256` 由 GitHub Actions 在每次 push `v*` tag 时自动更新，见 [`Casks/paytick.rb`](Casks/paytick.rb) 和 [`.github/workflows/release.yml`](.github/workflows/release.yml)。
 
 ### 源码构建
 
