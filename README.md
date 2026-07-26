@@ -2,6 +2,8 @@
 
 A macOS menu bar app that ticks your earnings in real time — watch your salary grow second by second, with end-of-day reminders.
 
+**English** · [简体中文](README.zh-CN.md)
+
 ![macOS 13+](https://img.shields.io/badge/macOS-13%2B-blue)
 ![Swift 6](https://img.shields.io/badge/Swift-6-orange)
 ![License: MIT](https://img.shields.io/badge/License-MIT-green)

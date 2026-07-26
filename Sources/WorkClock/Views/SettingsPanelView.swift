@@ -2,22 +2,33 @@ import SwiftUI
 
 struct SettingsPanelView: View {
     @EnvironmentObject var store: ScheduleStore
+    @EnvironmentObject var l10n: Localization
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
         VStack(spacing: 0) {
             Form {
-                Section("上午时段") {
-                    timeRow(title: "上班时间", minute: $store.schedule.morningStartMin)
-                    timeRow(title: "下班时间", minute: $store.schedule.morningEndMin)
+                Section(l10n.t("languageSection")) {
+                    Picker(l10n.t("languageSection"), selection: $l10n.language) {
+                        ForEach(AppLanguage.allCases, id: \.self) { lang in
+                            Text(lang.displayName).tag(lang)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .labelsHidden()
                 }
-                Section("下午时段") {
-                    timeRow(title: "上班时间", minute: $store.schedule.afternoonStartMin)
-                    timeRow(title: "下班时间", minute: $store.schedule.afternoonEndMin)
+
+                Section(l10n.t("morningSection")) {
+                    timeRow(title: l10n.t("startTime"), minute: $store.schedule.morningStartMin)
+                    timeRow(title: l10n.t("endTime"), minute: $store.schedule.morningEndMin)
+                }
+                Section(l10n.t("afternoonSection")) {
+                    timeRow(title: l10n.t("startTime"), minute: $store.schedule.afternoonStartMin)
+                    timeRow(title: l10n.t("endTime"), minute: $store.schedule.afternoonEndMin)
                 }
                 Section {
                     HStack {
-                        Text("日薪")
+                        Text(l10n.t("dailySalary"))
                         Spacer()
                         TextField("",
                             text: Binding(
@@ -37,7 +48,7 @@ struct SettingsPanelView: View {
                         .textFieldStyle(.roundedBorder)
                     }
                     HStack {
-                        Text("时薪（自动计算）")
+                        Text(l10n.t("hourlyRateAuto"))
                             .foregroundStyle(.secondary)
                         Spacer()
                         Text(computedHourlyRate)
@@ -45,37 +56,32 @@ struct SettingsPanelView: View {
                             .foregroundStyle(.secondary)
                     }
                 } header: {
-                    Text("工资")
+                    Text(l10n.t("salarySection"))
                 }
                 Section {
-                    Stepper(value: $store.schedule.reminderMinutes, in: 1...60) {
-                        HStack {
-                            Image(systemName: "bell.badge")
-                                .foregroundStyle(.orange)
-                            Text("下班前 \(store.schedule.reminderMinutes) 分钟提醒")
-                        }
-                    }
+                    Stepper(l10n.t("remindMinutesBefore", store.schedule.reminderMinutes),
+                            value: $store.schedule.reminderMinutes, in: 1...60)
                 } header: {
-                    Text("提醒")
+                    Text(l10n.t("reminderSection"))
                 } footer: {
-                    Text("提醒方式：系统通知 + 菜单栏金额变橙色")
+                    Text(l10n.t("reminderMethodNote"))
                 }
                 Section {
                     Toggle(isOn: $store.schedule.overtimeMode) {
-                        Label("加班模式", systemImage: "moon.fill")
+                        Label(l10n.t("overtimeMode"), systemImage: "moon.fill")
                     }
-                    Text("开启后周末也会按工作时间累计工资并发送下班提醒。")
+                    Text(l10n.t("overtimeDescription"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } header: {
-                    Text("周末")
+                    Text(l10n.t("weekendSection"))
                 }
             }
             .formStyle(.grouped)
 
             HStack {
                 Spacer()
-                Button("完成") {
+                Button(l10n.t("done")) {
                     dismiss()
                     NSApp.keyWindow?.close()
                 }
@@ -83,7 +89,7 @@ struct SettingsPanelView: View {
             }
             .padding()
         }
-        .frame(width: 380, height: 560)
+        .frame(width: 380, height: 620)
     }
 
     private func timeRow(title: String, minute: Binding<Int>) -> some View {
@@ -105,9 +111,9 @@ struct SettingsPanelView: View {
     private var computedHourlyRate: String {
         let total = (store.schedule.morningEndMin - store.schedule.morningStartMin)
             + (store.schedule.afternoonEndMin - store.schedule.afternoonStartMin)
-        guard total > 0 else { return "¥0.00/时" }
+        guard total > 0 else { return String(format: l10n.t("hourlyRateFormat"), 0.0) }
         let hourly = store.schedule.dailySalary / Double(total / 60)
-        return "¥" + String(format: "%.2f", hourly) + "/时"
+        return String(format: l10n.t("hourlyRateFormat"), hourly)
     }
 
     private func minuteToDate(_ minuteOfDay: Int) -> Date {

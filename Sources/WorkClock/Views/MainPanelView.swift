@@ -6,6 +6,7 @@ struct MainPanelView: View {
     @EnvironmentObject var calculator: SalaryCalculator
     @EnvironmentObject var notifier: NotificationManager
     @EnvironmentObject var appDelegate: AppDelegate
+    @EnvironmentObject var l10n: Localization
 
     var body: some View {
         VStack(spacing: 0) {
@@ -32,7 +33,7 @@ struct MainPanelView: View {
                     Capsule().fill(stateBadgeColor.opacity(0.15))
                 )
 
-            Text("今日已赚")
+            Text(l10n.t("earnedToday"))
                 .font(.caption)
                 .foregroundStyle(.secondary)
 
@@ -42,7 +43,9 @@ struct MainPanelView: View {
                 .foregroundStyle(calculator.isInReminderWindow ? Color.orange : Color.primary)
                 .contentTransition(.numericText())
 
-            Text("日薪 \(AppDelegate.currencyFormatter.string(from: NSNumber(value: store.schedule.dailySalary)) ?? "¥0") · 已工作 \(formatMinutes(Int(calculator.workedSeconds/60)))")
+            Text(l10n.t("dailySalaryWithWorked",
+                        AppDelegate.currencyFormatter.string(from: NSNumber(value: store.schedule.dailySalary)) ?? "¥0",
+                        Int(calculator.workedSeconds/60)))
                 .font(.caption2)
                 .foregroundStyle(.secondary)
         }
@@ -64,11 +67,13 @@ struct MainPanelView: View {
     private var progressCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Text("工作进度")
+                Text(l10n.t("progress"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text("\(Int(calculator.workedSeconds/60))/\(Int(calculator.totalSeconds/60)) 分钟")
+                Text(l10n.t("minutesTotalFormat",
+                            Int(calculator.workedSeconds/60),
+                            Int(calculator.totalSeconds/60)))
                     .font(.caption.monospacedDigit())
                     .foregroundStyle(.secondary)
             }
@@ -97,7 +102,7 @@ struct MainPanelView: View {
                 statusRow(
                     icon: "clock.fill",
                     color: calculator.isInReminderWindow ? .orange : .blue,
-                    title: "距离下班",
+                    title: l10n.t("untilClockOut"),
                     value: formatCountdown(calculator.secondsUntilOff),
                     valueColor: calculator.isInReminderWindow ? .orange : .primary
                 )
@@ -105,7 +110,7 @@ struct MainPanelView: View {
                 statusRow(
                     icon: "checkmark.circle.fill",
                     color: .green,
-                    title: "今日完成",
+                    title: l10n.t("doneToday"),
                     value: AppDelegate.currencyFormatter.string(from: NSNumber(value: store.schedule.dailySalary)) ?? "¥0",
                     valueColor: .green
                 )
@@ -113,15 +118,15 @@ struct MainPanelView: View {
                 statusRow(
                     icon: "cup.and.saucer.fill",
                     color: .purple,
-                    title: "今日周末休息",
-                    value: "0 元",
+                    title: l10n.t("weekendOff"),
+                    value: "¥0",
                     valueColor: .secondary
                 )
             case .beforeWork:
                 statusRow(
                     icon: "sun.max.fill",
                     color: .yellow,
-                    title: "还没开始上班",
+                    title: l10n.t("notStartedYet"),
                     value: formatTimeFromMinute(store.schedule.morningStartMin),
                     valueColor: .secondary
                 )
@@ -129,7 +134,7 @@ struct MainPanelView: View {
                 statusRow(
                     icon: "sun.max.fill",
                     color: .yellow,
-                    title: "上午工作中",
+                    title: l10n.t("morningShift"),
                     value: formatCountdown(store.schedule.dateForMinute(store.schedule.morningEndMin, on: Date(), calendar: .current).timeIntervalSinceNow),
                     valueColor: .primary
                 )
@@ -137,7 +142,7 @@ struct MainPanelView: View {
                 statusRow(
                     icon: "fork.knife",
                     color: .orange,
-                    title: "午休中",
+                    title: l10n.t("lunchBreak"),
                     value: formatCountdown(store.schedule.dateForMinute(store.schedule.afternoonStartMin, on: Date(), calendar: .current).timeIntervalSinceNow),
                     valueColor: .primary
                 )
@@ -151,7 +156,7 @@ struct MainPanelView: View {
                     Image(systemName: "bell.badge.fill")
                         .font(.caption2)
                         .foregroundStyle(.orange)
-                    Text("今日已发送下班提醒")
+                    Text(l10n.t("reminderSentToday"))
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                 }
@@ -181,7 +186,7 @@ struct MainPanelView: View {
     private var actionsBar: some View {
         HStack {
             Toggle(isOn: $store.schedule.overtimeMode) {
-                Label("加班", systemImage: "moon.fill")
+                Label(l10n.t("overtime"), systemImage: "moon.fill")
                     .font(.caption)
             }
             .toggleStyle(.switch)
@@ -192,14 +197,14 @@ struct MainPanelView: View {
             Button {
                 appDelegate.openSettings()
             } label: {
-                Label("设置", systemImage: "gearshape")
+                Label(l10n.t("settings"), systemImage: "gearshape")
                     .font(.caption)
             }
 
             Button {
                 NSApplication.shared.terminate(nil)
             } label: {
-                Label("退出", systemImage: "power")
+                Label(l10n.t("quit"), systemImage: "power")
                     .font(.caption)
             }
         }
@@ -210,12 +215,12 @@ struct MainPanelView: View {
     // MARK: - 状态文字
     private var stateBadgeText: String {
         switch calculator.state {
-        case .beforeWork: return "未开始"
-        case .morning: return "上午"
-        case .lunchBreak: return "午休"
-        case .afternoon: return "下午"
-        case .afterWork: return "已下班"
-        case .weekendOff: return "周末休息"
+        case .beforeWork: return l10n.t("stateBeforeWork")
+        case .morning: return l10n.t("stateMorning")
+        case .lunchBreak: return l10n.t("stateLunchBreak")
+        case .afternoon: return l10n.t("stateAfternoon")
+        case .afterWork: return l10n.t("stateAfterWork")
+        case .weekendOff: return l10n.t("stateWeekendOff")
         }
     }
 
@@ -231,13 +236,6 @@ struct MainPanelView: View {
     }
 
     // MARK: - 工具方法
-    private func formatMinutes(_ totalMin: Int) -> String {
-        let h = totalMin / 60
-        let m = totalMin % 60
-        if h > 0 { return "\(h)时\(m)分" }
-        return "\(m)分"
-    }
-
     private func formatTimeFromMinute(_ minuteOfDay: Int) -> String {
         let h = minuteOfDay / 60
         let m = minuteOfDay % 60

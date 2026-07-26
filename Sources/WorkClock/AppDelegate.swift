@@ -26,6 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             .environmentObject(calculator)
             .environmentObject(notifier)
             .environmentObject(self)
+            .environmentObject(Localization.shared)
         popover = NSPopover()
         popover.behavior = .transient
         popover.contentViewController = NSHostingController(rootView: mainView)
@@ -82,7 +83,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let color: NSColor = isWarning ? .systemOrange : .labelColor
         let titleText: String
         if isWeekend {
-            titleText = " 周末休息 "
+            titleText = Localization.shared.t("menuBarWeekendRest")
         } else {
             titleText = " \(amountStr) "
         }
@@ -90,7 +91,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             .font: menuFont,
             .foregroundColor: color
         ])
-        button?.toolTip = "PayTick · 距下班 \(Int(calculator.secondsUntilOff/60)) 分钟"
+        button?.toolTip = Localization.shared.t("toolTipUntilOff", Int(calculator.secondsUntilOff/60))
     }
 
     /// 绘制两行紧凑的倒计时图片：上行 "{hours}H"，下行 "{minutes}M"
@@ -146,9 +147,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         if settingsWindow == nil {
             let view = SettingsPanelView()
                 .environmentObject(store)
+                .environmentObject(Localization.shared)
             let controller = NSHostingController(rootView: view)
             let window = NSWindow(contentViewController: controller)
-            window.title = "PayTick 设置"
+            window.title = Localization.shared.t("settingsWindowTitle")
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.isReleasedWhenClosed = false
             window.center()

@@ -37,14 +37,14 @@ final class NotificationManager: ObservableObject {
         }
 
         let content = UNMutableNotificationContent()
-        content.title = "快下班了 ⏰"
+        content.title = Localization.shared.t("notifTitle")
         let totalSecs = Int(calculator.secondsUntilOff.rounded())
         let minutes = totalSecs / 60
         let seconds = totalSecs % 60
         if minutes > 0 {
-            content.body = "还有 \(minutes) 分 \(seconds) 秒下班，准备收拾东西吧～"
+            content.body = Localization.shared.t("notifBodyMinutes", minutes, seconds)
         } else {
-            content.body = "还有 \(seconds) 秒就下班啦，准备冲！"
+            content.body = Localization.shared.t("notifBodySeconds", seconds)
         }
         content.sound = .default
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 0.2, repeats: false)
