@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version to release (e.g. 1.0.0)"
+        required: true
+
+jobs:
+  release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Determine version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            VERSION="${{ inputs.version }}"
+            TAG="v${VERSION}"
+          else
+            TAG="${GITHUB_REF#refs/tags/}"
+            VERSION="${TAG#v}"
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=$TAG" >> $GITHUB_OUTPUT
+
+      - name: Build app
+        run: bash build.sh
+
+      - name: Ad-hoc sign
+        run: codesign -s - --force --deep PayTick.app
+
+      - name: Verify signature
+        run: codesign -dv PayTick.app
+
+      - name: Create DMG
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          DMG="PayTick-${VERSION}.dmg"
+          rm -f "$DMG"
+          # 创建临时 DMG 目录，把 .app 和 Applications 快捷方式都放进去（拖拽安装友好）
+          STAGING=$(mktemp -d)
+          cp -R PayTick.app "$STAGING/"
+          ln -s /Applications "$STAGING/Applications"
+          hdiutil create -volname "PayTick" -srcfolder "$STAGING" -ov -format UDZO "$DMG"
+          hdiutil verify "$DMG"
+          rm -rf "$STAGING"
+          echo "DMG_PATH=$DMG" >> $GITHUB_ENV
+
+      - name: Compute SHA256
+        id: sha
+        run: |
+          SHA=$(shasum -a 256 "$DMG_PATH" | awk '{print $1}')
+          echo "sha256=$SHA" >> $GITHUB_OUTPUT
+          echo "Computed sha256: $SHA"
+
+      - name: Update cask
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          SHA="${{ steps.sha.outputs.sha256 }}"
+          # macOS sed 需要 -i '' 空备份后缀
+          sed -i '' "s/^  version \".*\"/  version \"$VERSION\"/" Casks/paytick.rb
+          sed -i '' "s/^  sha256 \".*\"/  sha256 \"$SHA\"/" Casks/paytick.rb
+          echo "=== Updated Casks/paytick.rb ==="
+          cat Casks/paytick.rb
+
+      - name: Commit cask update
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Casks/paytick.rb
+          if git diff --cached --quiet; then
+            echo "No cask changes to commit"
+          else
+            git commit -m "Bump cask to v${{ steps.version.outputs.version }} (sha256 auto-update)"
+            git push origin main
+          fi
+
+      - name: Create tag (workflow_dispatch only)
+        if: github.event_name == 'workflow_dispatch'
+        run: |
+          git tag "${{ steps.version.outputs.tag }}"
+          git push origin "${{ steps.version.outputs.tag }}"
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: PayTick v${{ steps.version.outputs.version }}
+          generate_release_notes: true
+          files: ${{ env.DMG_PATH }}
