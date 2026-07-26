@@ -23,14 +23,17 @@
 
 ### Homebrew
 
+先 tap 仓库一次，然后安装：
+
 ```bash
-brew install --cask https://raw.githubusercontent.com/yueseqaz/PayTick/main/Casks/paytick.rb
+brew tap yueseqaz/paytick https://github.com/yueseqaz/PayTick.git
+brew install --cask paytick
 ```
 
-升级到新版本：
+新版本发布后升级：
 
 ```bash
-brew uninstall --cask paytick && brew install --cask https://raw.githubusercontent.com/yueseqaz/PayTick/main/Casks/paytick.rb
+brew upgrade --cask paytick
 ```
 
 cask 的 `version` 和 `sha256` 由 GitHub Actions 在每次 push `v*` tag 时自动更新，见 [`Casks/paytick.rb`](Casks/paytick.rb) 和 [`.github/workflows/release.yml`](.github/workflows/release.yml)。
