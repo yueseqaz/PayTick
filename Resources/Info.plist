@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>PayTick</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.sakura.paytick</string>
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+    <key>CFBundleName</key>
+    <string>PayTick</string>
+    <key>CFBundleDisplayName</key>
+    <string>PayTick</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>13.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSPrincipalClass</key>
+    <string>NSApplication</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSUserNotificationsUsageDescription</key>
+    <string>PayTick 需要发送通知以在下班前提醒您。</string>
+    <key>NSAppleEventUsageDescription</key>
+    <string>PayTick 需要使用 AppleEvent 来切换前台。</string>
+</dict>
+</plist>
