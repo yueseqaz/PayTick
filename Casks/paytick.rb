@@ -1,6 +1,6 @@
 cask "paytick" do
-  version "1.1.0"
-  sha256 "b211888f57696195d1e9d8a6cf0d6558a4070147ce9d872b056852a8add007e9"
+  version "1.2.0"
+  sha256 "9d7117db3cafce5d014760f985c6df5b0763e729b4eac1211e88f397dfe7abcf"
 
   url "https://github.com/yueseqaz/PayTick/releases/download/v#{version}/PayTick-#{version}.dmg"
   name "PayTick"
