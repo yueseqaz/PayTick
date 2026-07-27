@@ -6,12 +6,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var settingsWindow: NSWindow?
+    private var attendanceWindow: NSWindow?
     private var refreshTimer: Timer?
     private var eventMonitor: Any?
 
     let store = ScheduleStore()
     let calculator = SalaryCalculator()
     let notifier = NotificationManager()
+    let attendanceStore = AttendanceStore()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         notifier.requestAuthorization()
@@ -26,6 +28,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             .environmentObject(calculator)
             .environmentObject(notifier)
             .environmentObject(self)
+            .environmentObject(attendanceStore)
             .environmentObject(Localization.shared)
         popover = NSPopover()
         popover.behavior = .transient
@@ -62,36 +65,52 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         let button = statusItem.button
         let amountStr = Self.currencyFormatter.string(from: NSNumber(value: calculator.earnedToday)) ?? "¥0.00"
         let isWarning = calculator.isInReminderWindow
-        let isWeekend = (calculator.state == .weekendOff)
 
-        // 图标位置：工作日显示两行 H/M 倒计时，周末显示茶杯图标
-        if isWeekend {
-            let icon = NSImage(systemSymbolName: "cup.and.saucer", accessibilityDescription: "PayTick")
-            icon?.isTemplate = true
-            button?.image = icon
-        } else {
+        let menuFont = NSFont.monospacedDigitSystemFont(ofSize: NSFont.menuBarFont(ofSize: 0).pointSize, weight: .regular)
+        let textColor: NSColor = isWarning ? .systemOrange : .labelColor
+
+        // 根据状态决定显示模式：非工作时段只显示图标+文字，工作时段才显示倒计时+金额
+        switch calculator.state {
+        case .weekendOff:
+            applySymbolAndText(button: button, symbol: "cup.and.saucer",
+                               text: Localization.shared.t("menuBarWeekendRest"),
+                               font: menuFont, color: textColor)
+        case .beforeWork:
+            applySymbolAndText(button: button, symbol: "sun.max",
+                               text: Localization.shared.t("menuBarBeforeWork"),
+                               font: menuFont, color: textColor)
+        case .afterWork:
+            applySymbolAndText(button: button, symbol: "checkmark.circle.fill",
+                               text: Localization.shared.t("menuBarAfterWork"),
+                               font: menuFont, color: textColor)
+        case .morning, .lunchBreak, .afternoon:
+            // 工作时段：两行 H/M 倒计时 + 金额
             let secs = max(0, Int(calculator.secondsUntilOff))
             let hours = secs / 3600
             let minutes = (secs % 3600) / 60
             button?.image = makeCountdownImage(hours: hours, minutes: minutes, isWarning: isWarning)
+            button?.imagePosition = .imageLeft
+            button?.imageScaling = .scaleProportionallyDown
+            button?.attributedTitle = NSAttributedString(string: " \(amountStr) ", attributes: [
+                .font: menuFont,
+                .foregroundColor: textColor
+            ])
         }
+        button?.toolTip = Localization.shared.t("toolTipUntilOff", Int(calculator.secondsUntilOff/60))
+    }
+
+    /// 工具方法：用 SF Symbol 图标 + 文字标签设置菜单栏按钮（用于非工作时段）
+    private func applySymbolAndText(button: NSStatusBarButton?, symbol: String, text: String,
+                                     font: NSFont, color: NSColor) {
+        let icon = NSImage(systemSymbolName: symbol, accessibilityDescription: "PayTick")
+        icon?.isTemplate = true
+        button?.image = icon
         button?.imagePosition = .imageLeft
         button?.imageScaling = .scaleProportionallyDown
-
-        // 文字部分：金额或周末提示
-        let menuFont = NSFont.monospacedDigitSystemFont(ofSize: NSFont.menuBarFont(ofSize: 0).pointSize, weight: .regular)
-        let color: NSColor = isWarning ? .systemOrange : .labelColor
-        let titleText: String
-        if isWeekend {
-            titleText = Localization.shared.t("menuBarWeekendRest")
-        } else {
-            titleText = " \(amountStr) "
-        }
-        button?.attributedTitle = NSAttributedString(string: titleText, attributes: [
-            .font: menuFont,
+        button?.attributedTitle = NSAttributedString(string: " \(text) ", attributes: [
+            .font: font,
             .foregroundColor: color
         ])
-        button?.toolTip = Localization.shared.t("toolTipUntilOff", Int(calculator.secondsUntilOff/60))
     }
 
     /// 绘制两行紧凑的倒计时图片：上行 "{hours}H"，下行 "{minutes}M"
@@ -153,11 +172,38 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             window.title = Localization.shared.t("settingsWindowTitle")
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.isReleasedWhenClosed = false
-            window.center()
+            centerWindow(window, defaultSize: NSSize(width: 420, height: 520))
             settingsWindow = window
         }
         settingsWindow?.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    func openAttendance() {
+        closePopover()
+        if attendanceWindow == nil {
+            let view = AttendanceView()
+                .environmentObject(attendanceStore)
+                .environmentObject(Localization.shared)
+            let controller = NSHostingController(rootView: view)
+            let window = NSWindow(contentViewController: controller)
+            window.title = Localization.shared.t("attendanceWindowTitle")
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.isReleasedWhenClosed = false
+            centerWindow(window, defaultSize: NSSize(width: 760, height: 560))
+            window.minSize = NSSize(width: 600, height: 480)
+            attendanceWindow = window
+        }
+        attendanceWindow?.makeKeyAndOrderFront(nil)
+        NSApp.activate(ignoringOtherApps: true)
+    }
+
+    /// 通用窗口居中工具：按默认尺寸 + 屏幕可视区域居中
+    private func centerWindow(_ window: NSWindow, defaultSize: NSSize) {
+        let screenFrame = NSScreen.main?.visibleFrame ?? NSRect(x: 0, y: 0, width: 1280, height: 800)
+        let cx = screenFrame.midX - defaultSize.width / 2
+        let cy = screenFrame.midY - defaultSize.height / 2
+        window.setFrame(NSRect(x: cx, y: cy, width: defaultSize.width, height: defaultSize.height), display: true)
     }
 
     static let currencyFormatter: NumberFormatter = {

@@ -195,6 +195,13 @@ struct MainPanelView: View {
             Spacer()
 
             Button {
+                appDelegate.openAttendance()
+            } label: {
+                Label(l10n.t("attendanceWindowTitle"), systemImage: "calendar.badge.clock")
+                    .font(.caption)
+            }
+
+            Button {
                 appDelegate.openSettings()
             } label: {
                 Label(l10n.t("settings"), systemImage: "gearshape")
