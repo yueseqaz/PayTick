@@ -235,32 +235,55 @@ final class AttendanceStore: ObservableObject {
         return importedCount
     }
 
-    // MARK: 导出 CSV
+    // MARK: 导出 Excel (.xlsx)
 
-    /// 生成 CSV 字符串，列：date, weekday, period, status, note
-    func exportCSV(year: Int, month: Int) -> String {
-        let calendar = Calendar.current
-        let weekdayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
+    /// 导出某月考勤为 .xlsx 文件，100% 复刻原 PHP 项目样式
+    /// - Parameters:
+    ///   - year: 年份（如 2026）
+    ///   - month: 月份（1-12）
+    ///   - url: 目标文件 URL（NSSavePanel 由调用方传入）
+    /// - Returns: 成功与否
+    func exportXLSX(year: Int, month: Int, to url: URL) -> Bool {
+        let cal = Calendar.current
+        var startComps = DateComponents()
+        startComps.year = year
+        startComps.month = month
+        startComps.day = 1
+        guard let start = cal.date(from: startComps),
+              let range = cal.range(of: .day, in: .month, for: start) else { return false }
+        var endComps = startComps
+        endComps.day = range.count
+        guard let end = cal.date(from: endComps) else { return false }
+
+        let title = String(format: "%04d-%02d 考勤记录", year, month)
         let monthRecords = recordsFor(year: year, month: month)
+        return XLSXExporter.export(records: monthRecords, rangeStart: start, rangeEnd: end,
+                                    title: title, to: url)
+    }
 
-        var rows: [String] = ["date,weekday,period,status,note"]
-        let dayFormatter = DateFormatter()
-        dayFormatter.dateFormat = "yyyy-MM-dd"
+    /// 导出某年考勤为 .xlsx 文件
+    /// - Parameters:
+    ///   - year: 年份
+    ///   - url: 目标文件 URL
+    /// - Returns: 成功与否
+    func exportXLSX(year: Int, to url: URL) -> Bool {
+        let cal = Calendar.current
+        var startComps = DateComponents()
+        startComps.year = year
+        startComps.month = 1
+        startComps.day = 1
+        var endComps = DateComponents()
+        endComps.year = year
+        endComps.month = 12
+        endComps.day = 31
+        guard let start = cal.date(from: startComps),
+              let end = cal.date(from: endComps) else { return false }
 
-        for r in monthRecords {
-            let dateStr = dayFormatter.string(from: r.recordDate)
-            let weekday = weekdayNames[calendar.component(.weekday, from: r.recordDate) - 1]
-            let period = r.period.rawValue
-            let status = r.status.rawValue
-            // CSV 转义：双引号包裹，内部双引号重复
-            let noteEscaped: String
-            if r.note.isEmpty {
-                noteEscaped = ""
-            } else {
-                noteEscaped = "\"" + r.note.replacingOccurrences(of: "\"", with: "\"\"") + "\""
-            }
-            rows.append("\(dateStr),\(weekday),\(period),\(status),\(noteEscaped)")
+        let title = "\(year) 年度考勤记录"
+        let yearRecords = records.filter {
+            cal.component(.year, from: $0.recordDate) == year
         }
-        return rows.joined(separator: "\n")
+        return XLSXExporter.export(records: yearRecords, rangeStart: start, rangeEnd: end,
+                                    title: title, to: url)
     }
 }

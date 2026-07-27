@@ -78,10 +78,11 @@ struct AttendanceView: View {
                     .font(.caption)
             }
 
-            Button {
-                exportCSV()
+            Menu {
+                Button(l10n.t("attendanceExportMonth")) { exportExcel(month: true) }
+                Button(l10n.t("attendanceExportYear")) { exportExcel(month: false) }
             } label: {
-                Label(l10n.t("attendanceExport"), systemImage: "square.and.arrow.up")
+                Label(l10n.t("attendanceExportExcel"), systemImage: "square.and.arrow.up")
                     .font(.caption)
             }
         }
@@ -169,24 +170,33 @@ struct AttendanceView: View {
 
     // MARK: - Actions
 
-    private func exportCSV() {
+    private func exportExcel(month: Bool) {
         let cal = Calendar.current
         let year = cal.component(.year, from: displayedMonth)
-        let month = cal.component(.month, from: displayedMonth)
-        let csv = store.exportCSV(year: year, month: month)
-        let suggested = String(format: "%04d-%02d.csv", year, month)
+        let monthNum = cal.component(.month, from: displayedMonth)
+        let suggested: String
+        if month {
+            suggested = String(format: "考勤记录_%04d-%02d.xlsx", year, monthNum)
+        } else {
+            suggested = "考勤记录_\(year).xlsx"
+        }
 
         let panel = NSSavePanel()
-        panel.title = l10n.t("attendanceExport")
+        panel.title = l10n.t("attendanceExportExcel")
         panel.nameFieldStringValue = suggested
-        panel.allowedContentTypes = [.commaSeparatedText]
+        panel.allowedContentTypes = [.spreadsheet]
         if panel.runModal() == .OK, let url = panel.url {
-            do {
-                try csv.data(using: .utf8)?.write(to: url)
+            let ok: Bool
+            if month {
+                ok = store.exportXLSX(year: year, month: monthNum, to: url)
+            } else {
+                ok = store.exportXLSX(year: year, to: url)
+            }
+            if ok {
                 importMessage = "✓ \(url.lastPathComponent)"
                 importError = false
-            } catch {
-                importMessage = error.localizedDescription
+            } else {
+                importMessage = "✗ 导出失败"
                 importError = true
             }
         }
@@ -255,6 +265,10 @@ private struct DayCellView: View {
         Calendar.current.component(.month, from: day) == Calendar.current.component(.month, from: month)
     }
     private var isToday: Bool { Calendar.current.isDateInToday(day) }
+    private var isWeekend: Bool {
+        let w = Calendar.current.component(.weekday, from: day)
+        return w == 1 || w == 7  // Sun or Sat
+    }
 
     var body: some View {
         VStack(spacing: 3) {
@@ -265,6 +279,7 @@ private struct DayCellView: View {
 
             ForEach(AttendancePeriod.allCases, id: \.self) { period in
                 if let rec = records.first(where: { $0.period == period }) {
+                    // 用户已设记录（含加班/请假等），原样显示
                     HStack(spacing: 2) {
                         Image(systemName: rec.status.symbol)
                             .font(.system(size: 8))
@@ -280,7 +295,20 @@ private struct DayCellView: View {
                     }
                     .lineLimit(1)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                } else if isWeekend && isInMonth {
+                    // 周末无记录：自动显示"休息"
+                    HStack(spacing: 2) {
+                        Image(systemName: AttendanceStatus.rest.symbol)
+                            .font(.system(size: 8))
+                            .foregroundStyle(AttendanceStatus.rest.color.opacity(0.7))
+                        Text(AttendanceStatus.rest.displayName)
+                            .font(.system(size: 9))
+                            .foregroundStyle(.tertiary)
+                    }
+                    .lineLimit(1)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 } else {
+                    // 工作日无记录：占位
                     HStack(spacing: 2) {
                         Image(systemName: period.symbol)
                             .font(.system(size: 8))
