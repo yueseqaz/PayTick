@@ -286,4 +286,28 @@ final class AttendanceStore: ObservableObject {
         return XLSXExporter.export(records: yearRecords, rangeStart: start, rangeEnd: end,
                                     title: title, to: url)
     }
+
+    /// 导出指定日期范围（含两端）为 .xlsx 文件
+    /// - Parameters:
+    ///   - rangeStart: 起始日期（含）
+    ///   - rangeEnd: 结束日期（含）
+    ///   - url: 目标文件 URL
+    /// - Returns: 成功与否
+    func exportXLSX(rangeStart: Date, rangeEnd: Date, to url: URL) -> Bool {
+        let startNorm = AttendanceRecord.normalize(rangeStart)
+        let endNorm = AttendanceRecord.normalize(rangeEnd)
+
+        // 范围内记录
+        let rangeRecords = records.filter {
+            $0.recordDate >= startNorm && $0.recordDate <= endNorm
+        }
+
+        // 标题格式与 PHP export.php 的 ?start=&end= 模式一致
+        let dayFmt = DateFormatter()
+        dayFmt.locale = Locale(identifier: "en_US_POSIX")
+        dayFmt.dateFormat = "yyyy-MM-dd"
+        let title = "\(dayFmt.string(from: startNorm)) 至 \(dayFmt.string(from: endNorm)) 考勤记录"
+        return XLSXExporter.export(records: rangeRecords, rangeStart: startNorm, rangeEnd: endNorm,
+                                    title: title, to: url)
+    }
 }

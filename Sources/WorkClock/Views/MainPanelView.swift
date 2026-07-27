@@ -184,35 +184,41 @@ struct MainPanelView: View {
 
     // MARK: - 底部按钮
     private var actionsBar: some View {
-        HStack {
-            Toggle(isOn: $store.schedule.overtimeMode) {
+        VStack(spacing: 10) {
+            HStack {
                 Label(l10n.t("overtime"), systemImage: "moon.fill")
                     .font(.caption)
-            }
-            .toggleStyle(.switch)
-            .controlSize(.small)
-
-            Spacer()
-
-            Button {
-                appDelegate.openAttendance()
-            } label: {
-                Label(l10n.t("attendanceWindowTitle"), systemImage: "calendar.badge.clock")
-                    .font(.caption)
+                Spacer()
+                Toggle(isOn: $store.schedule.overtimeMode) {
+                    EmptyView()
+                }
+                .toggleStyle(.switch)
+                .controlSize(.small)
+                .labelsHidden()
             }
 
-            Button {
-                appDelegate.openSettings()
-            } label: {
-                Label(l10n.t("settings"), systemImage: "gearshape")
-                    .font(.caption)
-            }
+            HStack {
+                Spacer()
+                Button {
+                    appDelegate.openAttendance()
+                } label: {
+                    Label(l10n.t("attendanceWindowTitle"), systemImage: "calendar.badge.clock")
+                        .font(.caption)
+                }
 
-            Button {
-                NSApplication.shared.terminate(nil)
-            } label: {
-                Label(l10n.t("quit"), systemImage: "power")
-                    .font(.caption)
+                Button {
+                    appDelegate.openSettings()
+                } label: {
+                    Label(l10n.t("settings"), systemImage: "gearshape")
+                        .font(.caption)
+                }
+
+                Button {
+                    NSApplication.shared.terminate(nil)
+                } label: {
+                    Label(l10n.t("quit"), systemImage: "power")
+                        .font(.caption)
+                }
             }
         }
         .padding()

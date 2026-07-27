@@ -11,6 +11,9 @@ struct AttendanceView: View {
     @State private var editingDay: Date? = nil
     @State private var importMessage: String? = nil
     @State private var importError: Bool = false
+    @State private var showCustomExport: Bool = false
+    @State private var customRangeStart: Date = AttendanceView.firstDayOfMonth(Date())
+    @State private var customRangeEnd: Date = Date()
 
     var body: some View {
         VStack(spacing: 0) {
@@ -37,6 +40,15 @@ struct AttendanceView: View {
                    set: { if !$0 { importMessage = nil; importError = false } }
                )) {
             Button(l10n.t("attendanceClose")) { importMessage = nil; importError = false }
+        }
+        .sheet(isPresented: $showCustomExport) {
+            CustomRangeExportView(
+                rangeStart: $customRangeStart,
+                rangeEnd: $customRangeEnd
+            ) { start, end in
+                exportCustomRange(start: start, end: end)
+            }
+            .environmentObject(l10n)
         }
     }
 
@@ -81,6 +93,8 @@ struct AttendanceView: View {
             Menu {
                 Button(l10n.t("attendanceExportMonth")) { exportExcel(month: true) }
                 Button(l10n.t("attendanceExportYear")) { exportExcel(month: false) }
+                Divider()
+                Button(l10n.t("attendanceExportCustom")) { showCustomExport = true }
             } label: {
                 Label(l10n.t("attendanceExportExcel"), systemImage: "square.and.arrow.up")
                     .font(.caption)
@@ -192,6 +206,30 @@ struct AttendanceView: View {
             } else {
                 ok = store.exportXLSX(year: year, to: url)
             }
+            if ok {
+                importMessage = "✓ \(url.lastPathComponent)"
+                importError = false
+            } else {
+                importMessage = "✗ 导出失败"
+                importError = true
+            }
+        }
+    }
+
+    private func exportCustomRange(start: Date, end: Date) {
+        let fmt = DateFormatter()
+        fmt.locale = Locale(identifier: "en_US_POSIX")
+        fmt.dateFormat = "yyyy-MM-dd"
+        let startStr = fmt.string(from: start)
+        let endStr = fmt.string(from: end)
+        let suggested = "考勤记录_\(startStr)_至_\(endStr).xlsx"
+
+        let panel = NSSavePanel()
+        panel.title = l10n.t("attendanceExportExcel")
+        panel.nameFieldStringValue = suggested
+        panel.allowedContentTypes = [.spreadsheet]
+        if panel.runModal() == .OK, let url = panel.url {
+            let ok = store.exportXLSX(rangeStart: start, rangeEnd: end, to: url)
             if ok {
                 importMessage = "✓ \(url.lastPathComponent)"
                 importError = false
@@ -462,6 +500,58 @@ struct AttendanceDayEditorView: View {
     private func saveRecords() {
         store.upsert(date: day, period: .morning, status: morningStatus, note: morningNote)
         store.upsert(date: day, period: .afternoon, status: afternoonStatus, note: afternoonNote)
+    }
+}
+
+// MARK: - Custom range export sheet
+
+struct CustomRangeExportView: View {
+    @Binding var rangeStart: Date
+    @Binding var rangeEnd: Date
+    let onExport: (Date, Date) -> Void
+
+    @EnvironmentObject var l10n: Localization
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        VStack(spacing: 16) {
+            Text(l10n.t("attendanceExportCustom"))
+                .font(.headline)
+
+            Form {
+                Section(l10n.t("attendanceExportStart")) {
+                    DatePicker("", selection: $rangeStart, displayedComponents: .date)
+                        .labelsHidden()
+                }
+                Section(l10n.t("attendanceExportEnd")) {
+                    DatePicker("", selection: $rangeEnd, displayedComponents: .date)
+                        .labelsHidden()
+                }
+            }
+            .formStyle(.grouped)
+
+            if rangeEnd < rangeStart {
+                Text("⚠️ \(l10n.t("attendanceExportEnd")) < \(l10n.t("attendanceExportStart"))")
+                    .foregroundStyle(.orange)
+                    .font(.caption)
+            }
+
+            HStack {
+                Button(l10n.t("attendanceClose")) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
+                Spacer()
+                Button(l10n.t("attendanceExportConfirm")) {
+                    // 保证 start <= end
+                    let (s, e) = rangeStart <= rangeEnd ? (rangeStart, rangeEnd) : (rangeEnd, rangeStart)
+                    onExport(s, e)
+                    dismiss()
+                }
+                .keyboardShortcut(.defaultAction)
+                .buttonStyle(.borderedProminent)
+            }
+            .padding()
+        }
+        .frame(width: 360, height: 320)
     }
 }
 
