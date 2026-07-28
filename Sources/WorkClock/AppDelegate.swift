@@ -169,17 +169,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
 
     @objc func togglePopover(_ sender: Any?) {
         if popover.isShown {
-            closePopover()
+            popover.performClose(nil)
         } else if let button = statusItem.button {
-            // 懒加载：仅打开时创建 SwiftUI 视图树
-            let mainView = MainPanelView()
-                .environmentObject(store)
-                .environmentObject(calculator)
-                .environmentObject(notifier)
-                .environmentObject(self)
-                .environmentObject(attendanceStore)
-                .environmentObject(Localization.shared)
-            popover.contentViewController = NSHostingController(rootView: mainView)
+            // 懒加载：首次打开时创建，后续复用
+            if popover.contentViewController == nil {
+                let mainView = MainPanelView()
+                    .environmentObject(store)
+                    .environmentObject(calculator)
+                    .environmentObject(notifier)
+                    .environmentObject(self)
+                    .environmentObject(attendanceStore)
+                    .environmentObject(Localization.shared)
+                popover.contentViewController = NSHostingController(rootView: mainView)
+            }
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
     }
@@ -188,8 +190,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
         if popover.isShown {
             popover.performClose(nil)
         }
-        // 销毁视图树释放内存
-        popover.contentViewController = nil
     }
 
     func openSettings() {
@@ -202,7 +202,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
             let window = NSWindow(contentViewController: controller)
             window.title = Localization.shared.t("settingsWindowTitle")
             window.styleMask = [.titled, .closable, .miniaturizable]
-            window.isReleasedWhenClosed = true
+            window.isReleasedWhenClosed = false
             window.delegate = self
             centerWindow(window, defaultSize: NSSize(width: 420, height: 520))
             settingsWindow = window
@@ -224,7 +224,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
-            window.isReleasedWhenClosed = true
+            window.isReleasedWhenClosed = false
             window.delegate = self
             centerWindow(window, defaultSize: NSSize(width: 760, height: 620))
             window.minSize = NSSize(width: 600, height: 520)
