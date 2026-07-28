@@ -83,7 +83,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             applySymbolAndText(button: button, symbol: "checkmark.circle.fill",
                                text: Localization.shared.t("menuBarAfterWork"),
                                font: menuFont, color: textColor)
-        case .morning, .lunchBreak, .afternoon:
+        case .lunchBreak:
+            // 午休时段：图标 + "午休中" + 上午已赚金额
+            applySymbolAndText(button: button, symbol: "fork.knife",
+                               text: "\(Localization.shared.t("menuBarLunchBreak"))\(amountStr) ",
+                               font: menuFont, color: textColor)
+        case .morning, .afternoon:
             // 工作时段：两行 H/M 倒计时 + 金额
             let secs = max(0, Int(calculator.secondsUntilOff))
             let hours = secs / 3600
@@ -96,7 +101,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
                 .foregroundColor: textColor
             ])
         }
-        button?.toolTip = Localization.shared.t("toolTipUntilOff", Int(calculator.secondsUntilOff/60))
+        button?.toolTip = (calculator.state == .morning || calculator.state == .afternoon)
+            ? Localization.shared.t("toolTipUntilOff", Int(calculator.secondsUntilOff/60))
+            : "PayTick"
     }
 
     /// 工具方法：用 SF Symbol 图标 + 文字标签设置菜单栏按钮（用于非工作时段）
