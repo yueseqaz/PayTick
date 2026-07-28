@@ -27,6 +27,7 @@ struct AttendanceView: View {
             Divider()
             statsBar
         }
+        .padding(.top, 4)
         .background(Color(nsColor: .windowBackgroundColor))
         .sheet(item: Binding(
             get: { editingDay.map { IdentifiableDate(date: $0) } },
@@ -350,17 +351,15 @@ private struct DayCellView: View {
     }
 
     var body: some View {
-        VStack(spacing: 3) {
-            Text("\(Calendar.current.component(.day, from: day))")
-                .font(.caption.weight(isToday ? .bold : .regular))
-                .foregroundStyle(isInMonth ? .primary : .tertiary)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        if isInMonth {
+            VStack(spacing: 3) {
+                Text("\(Calendar.current.component(.day, from: day))")
+                    .font(.caption.weight(isToday ? .bold : .regular))
+                    .foregroundStyle(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            // 非当月日期：只显示日期号，不显示状态
-            if isInMonth {
                 ForEach(AttendancePeriod.allCases, id: \.self) { period in
                     if let rec = records.first(where: { $0.period == period }) {
-                        // 用户已设记录（含加班/请假等），原样显示
                         HStack(spacing: 2) {
                             Image(systemName: rec.status.symbol)
                                 .font(.system(size: 8))
@@ -377,7 +376,6 @@ private struct DayCellView: View {
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     } else if isWeekend {
-                        // 周末无记录：自动显示"休息"
                         HStack(spacing: 2) {
                             Image(systemName: AttendanceStatus.rest.symbol)
                                 .font(.system(size: 8))
@@ -389,20 +387,19 @@ private struct DayCellView: View {
                         .lineLimit(1)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    // 工作日无记录：不显示任何占位符，保持日历简洁
                 }
             }
+            .frame(maxWidth: .infinity, minHeight: 44, alignment: .top)
+            .padding(4)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isToday ? Color.accentColor.opacity(0.12) : Color.clear)
+            )
+        } else {
+            // 非当月：完全空白，仅占位保持网格对齐
+            Color.clear
+                .frame(maxWidth: .infinity, minHeight: 0)
         }
-        .frame(maxWidth: .infinity, minHeight: isInMonth ? 44 : 20, alignment: .top)
-        .padding(4)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isToday ? Color.accentColor.opacity(0.12) : Color.clear)
-                .overlay(
-                    RoundedRectangle(cornerRadius: 6)
-                        .strokeBorder(isInMonth ? Color.clear : Color.gray.opacity(0.06), lineWidth: 0.5)
-                )
-        )
     }
 }
 

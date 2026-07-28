@@ -198,8 +198,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             window.title = Localization.shared.t("attendanceWindowTitle")
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.isReleasedWhenClosed = false
-            centerWindow(window, defaultSize: NSSize(width: 760, height: 560))
-            window.minSize = NSSize(width: 600, height: 480)
+            centerWindow(window, defaultSize: NSSize(width: 760, height: 620))
+            window.minSize = NSSize(width: 600, height: 520)
             attendanceWindow = window
         }
         attendanceWindow?.makeKeyAndOrderFront(nil)
