@@ -192,6 +192,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             let view = AttendanceView()
                 .environmentObject(attendanceStore)
                 .environmentObject(Localization.shared)
+                .environmentObject(store)
             let controller = NSHostingController(rootView: view)
             let window = NSWindow(contentViewController: controller)
             window.title = Localization.shared.t("attendanceWindowTitle")

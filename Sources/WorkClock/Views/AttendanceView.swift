@@ -6,6 +6,7 @@ import AppKit
 struct AttendanceView: View {
     @EnvironmentObject var store: AttendanceStore
     @EnvironmentObject var l10n: Localization
+    @EnvironmentObject var scheduleStore: ScheduleStore
 
     @State private var displayedMonth: Date = AttendanceView.firstDayOfMonth(Date())
     @State private var editingDay: Date? = nil
@@ -21,6 +22,8 @@ struct AttendanceView: View {
             Divider()
             weekdayHeader
             calendarGrid
+            Divider()
+            monthlyEarningsCard
             Divider()
             statsBar
         }
@@ -156,6 +159,39 @@ struct AttendanceView: View {
 
     // MARK: - Stats bar
 
+    private var monthlyEarningsCard: some View {
+        let cal = Calendar.current
+        let year = cal.component(.year, from: displayedMonth)
+        let month = cal.component(.month, from: displayedMonth)
+        let stats = store.statsFor(year: year, month: month)
+        let workedHalfDays = (stats[.work, default: 0] + stats[.overtime, default: 0])
+        let workedDays = Double(workedHalfDays) / 2.0
+        let earned = workedDays * scheduleStore.schedule.dailySalary
+        let dailySalaryStr = AppDelegate.currencyFormatter.string(from: NSNumber(value: scheduleStore.schedule.dailySalary)) ?? "¥0"
+        let earnedStr = AppDelegate.currencyFormatter.string(from: NSNumber(value: earned)) ?? "¥0.00"
+        return HStack(spacing: 16) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(l10n.t("monthlyEarnings"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text(earnedStr)
+                    .font(.title2.weight(.bold).monospacedDigit())
+                    .foregroundStyle(.primary)
+            }
+            Spacer()
+            VStack(alignment: .trailing, spacing: 2) {
+                Text(l10n.t("monthlyWorkedDays", Int(workedDays)))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("× \(dailySalaryStr)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+    }
+
     private var statsBar: some View {
         let stats = store.statsFor(year: Calendar.current.component(.year, from: displayedMonth),
                                    month: Calendar.current.component(.month, from: displayedMonth))
@@ -277,10 +313,15 @@ struct AttendanceView: View {
         let cal = Calendar.current
         let firstOfMonth = Self.firstDayOfMonth(displayedMonth)
         let weekdayOfFirst = cal.component(.weekday, from: firstOfMonth)  // 1=Sun
-        // 始终返回 42 格（6 行 × 7 列）保证日历视觉稳定
-        // 前导格用上月日期填充（DayCellView 会把它们标灰）
+        // 当月天数
+        guard let range = cal.range(of: .day, in: .month, for: displayedMonth) else { return [] }
+        let daysInMonth = range.count
+        // 只需要覆盖前导格 + 当月天数，不够一行时补齐到整行
+        let totalCells = weekdayOfFirst - 1 + daysInMonth
+        let rowCount = Int(ceil(Double(totalCells) / 7.0))
+        let cellCount = rowCount * 7
         var days: [Date] = []
-        for i in 0..<42 {
+        for i in 0..<cellCount {
             let offset = i - (weekdayOfFirst - 1)
             var comps = DateComponents()
             comps.day = offset
