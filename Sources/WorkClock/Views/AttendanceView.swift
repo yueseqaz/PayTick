@@ -356,51 +356,44 @@ private struct DayCellView: View {
                 .foregroundStyle(isInMonth ? .primary : .tertiary)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            ForEach(AttendancePeriod.allCases, id: \.self) { period in
-                if let rec = records.first(where: { $0.period == period }) {
-                    // 用户已设记录（含加班/请假等），原样显示
-                    HStack(spacing: 2) {
-                        Image(systemName: rec.status.symbol)
-                            .font(.system(size: 8))
-                            .foregroundStyle(rec.status.color)
-                        Text(rec.status.displayName)
-                            .font(.system(size: 9))
-                            .foregroundStyle(.secondary)
-                        if !rec.note.isEmpty {
-                            Image(systemName: "note.text")
+            // 非当月日期：只显示日期号，不显示状态
+            if isInMonth {
+                ForEach(AttendancePeriod.allCases, id: \.self) { period in
+                    if let rec = records.first(where: { $0.period == period }) {
+                        // 用户已设记录（含加班/请假等），原样显示
+                        HStack(spacing: 2) {
+                            Image(systemName: rec.status.symbol)
                                 .font(.system(size: 8))
+                                .foregroundStyle(rec.status.color)
+                            Text(rec.status.displayName)
+                                .font(.system(size: 9))
                                 .foregroundStyle(.secondary)
+                            if !rec.note.isEmpty {
+                                Image(systemName: "note.text")
+                                    .font(.system(size: 8))
+                                    .foregroundStyle(.secondary)
+                            }
                         }
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                    } else if isWeekend {
+                        // 周末无记录：自动显示"休息"
+                        HStack(spacing: 2) {
+                            Image(systemName: AttendanceStatus.rest.symbol)
+                                .font(.system(size: 8))
+                                .foregroundStyle(AttendanceStatus.rest.color.opacity(0.7))
+                            Text(AttendanceStatus.rest.displayName)
+                                .font(.system(size: 9))
+                                .foregroundStyle(.tertiary)
+                        }
+                        .lineLimit(1)
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else if isWeekend && isInMonth {
-                    // 周末无记录：自动显示"休息"
-                    HStack(spacing: 2) {
-                        Image(systemName: AttendanceStatus.rest.symbol)
-                            .font(.system(size: 8))
-                            .foregroundStyle(AttendanceStatus.rest.color.opacity(0.7))
-                        Text(AttendanceStatus.rest.displayName)
-                            .font(.system(size: 9))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .lineLimit(1)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                } else {
-                    // 工作日无记录：占位
-                    HStack(spacing: 2) {
-                        Image(systemName: period.symbol)
-                            .font(.system(size: 8))
-                            .foregroundStyle(.tertiary)
-                        Text("—")
-                            .font(.system(size: 9))
-                            .foregroundStyle(.tertiary)
-                    }
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                    // 工作日无记录：不显示任何占位符，保持日历简洁
                 }
             }
         }
-        .frame(maxWidth: .infinity, minHeight: 44, alignment: .top)
+        .frame(maxWidth: .infinity, minHeight: isInMonth ? 44 : 20, alignment: .top)
         .padding(4)
         .background(
             RoundedRectangle(cornerRadius: 6)
