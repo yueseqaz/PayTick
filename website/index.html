@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="PayTick — macOS 菜单栏实时工资追踪应用">
+<title>PayTick 💴 — macOS Menu Bar Salary Tracker</title>
+<style>
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#0a0a0f;--surface:#111118;--surface2:#1a1a26;--border:rgba(255,255,255,.08);
+    --text:#e8e8ed;--text2:#a0a0b0;--text3:#60606f;--accent:#7c5cff;--accent2:#ff6b6b;
+    --green:#3dd68c;--orange:#ff9f43;--blue:#4d9fff;--radius:16px;--maxw:960px;
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Helvetica Neue",sans-serif;
+    --mono:"SF Mono",ui-monospace,"Cascadia Code","Fira Code",monospace;
+  }
+  html{scroll-behavior:smooth;font-size:16px}
+  body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;overflow-x:hidden}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:var(--maxw);margin:0 auto;padding:0 24px}
+  .grad-text{background:linear-gradient(135deg,#7c5cff 0%,#ff6b6b 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+
+  /* Nav */
+  nav{position:fixed;top:0;left:0;right:0;z-index:100;backdrop-filter:blur(20px);background:rgba(10,10,15,.72);border-bottom:1px solid var(--border)}
+  nav .wrap{display:flex;align-items:center;justify-content:space-between;height:56px}
+  .logo{font-size:1.15rem;font-weight:700;letter-spacing:-.02em;display:flex;align-items:center;gap:6px}
+  .nav-right{display:flex;align-items:center;gap:16px}
+  .lang-toggle{background:var(--surface2);border:1px solid var(--border);color:var(--text2);padding:5px 12px;border-radius:8px;font-size:.8rem;cursor:pointer;font-family:var(--font);transition:all .2s}
+  .lang-toggle:hover{border-color:var(--accent);color:var(--text)}
+  .nav-link{color:var(--text2);font-size:.875rem;transition:color .2s}
+  .nav-link:hover{color:var(--text)}
+
+  /* Hero */
+  .hero{padding:140px 0 80px;text-align:center;position:relative;overflow:hidden}
+  .hero::before{content:"";position:absolute;top:-200px;left:50%;transform:translateX(-50%);width:800px;height:800px;background:radial-gradient(circle,rgba(124,92,255,.18) 0%,transparent 60%);pointer-events:none}
+  .hero h1{font-size:3.2rem;font-weight:800;letter-spacing:-.03em;line-height:1.1;margin-bottom:16px;position:relative}
+  .hero .tagline{font-size:1.2rem;color:var(--text2);margin-bottom:36px;position:relative}
+  .hero .tagline strong{color:var(--text);font-weight:600}
+  .cta-row{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;position:relative}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;border-radius:12px;font-weight:600;font-size:.95rem;transition:all .2s;cursor:pointer;border:none;font-family:var(--font)}
+  .btn-primary{background:linear-gradient(135deg,#7c5cff,#6b4cff);color:#fff;box-shadow:0 4px 24px rgba(124,92,255,.35)}
+  .btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 32px rgba(124,92,255,.45)}
+  .btn-secondary{background:var(--surface2);color:var(--text);border:1px solid var(--border)}
+  .btn-secondary:hover{border-color:var(--text3);background:var(--surface)}
+
+  /* Menu bar mockup */
+  .menubar-mock{margin:48px auto 0;max-width:580px;position:relative}
+  .menubar-bar{background:#1a1a26;border:1px solid var(--border);border-radius:10px;padding:8px 16px;display:flex;align-items:center;justify-content:space-between;box-shadow:0 8px 40px rgba(0,0,0,.3)}
+  .menubar-left{display:flex;align-items:center;gap:10px;font-size:.75rem;color:var(--text3)}
+  .menubar-logo{width:14px;height:14px;border-radius:3px;background:linear-gradient(135deg,#7c5cff,#ff6b6b)}
+  .menubar-items{display:flex;align-items:center;gap:16px;font-size:.75rem;color:var(--text2)}
+  .menubar-item{display:flex;align-items:center;gap:4px;white-space:nowrap}
+  .menubar-amount{font-family:var(--mono);color:var(--green);font-weight:600}
+  .menubar-status{color:var(--orange);display:flex;align-items:center;gap:4px}
+  .menubar-time{font-family:var(--mono);color:var(--text2)}
+  .menubar-right{display:flex;align-items:center;gap:8px}
+  .menubar-icon{width:12px;height:12px;border-radius:2px;background:var(--text3)}
+
+  /* Section */
+  section{padding:80px 0;position:relative}
+  .section-title{text-align:center;margin-bottom:56px}
+  .section-title h2{font-size:1.8rem;font-weight:700;letter-spacing:-.02em;margin-bottom:8px}
+  .section-title p{color:var(--text2);font-size:1rem}
+
+  /* Feature grid */
+  .features{display:grid;grid-template-columns:repeat(2,1fr);gap:16px}
+  .feature{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px;transition:all .3s}
+  .feature:hover{border-color:rgba(124,92,255,.3);transform:translateY(-2px)}
+  .feature-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:14px}
+  .feature h3{font-size:1.05rem;font-weight:600;margin-bottom:6px}
+  .feature p{color:var(--text2);font-size:.875rem;line-height:1.5}
+
+  /* Stats */
+  .stats{display:flex;justify-content:center;gap:48px;flex-wrap:wrap}
+  .stat{text-align:center}
+  .stat .num{font-size:2rem;font-weight:800;letter-spacing:-.02em}
+  .stat .label{color:var(--text2);font-size:.875rem}
+
+  /* Install */
+  .install-cmd{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;font-family:var(--mono);font-size:.875rem;color:var(--text2);cursor:pointer;transition:border-color .2s}
+  .install-cmd:hover{border-color:var(--text3)}
+  .install-cmd .cmd{color:var(--green)}
+  .install-cmd .copy-hint{font-size:.75rem;color:var(--text3);font-family:var(--font)}
+
+  /* Footer */
+  footer{padding:48px 0 32px;border-top:1px solid var(--border);text-align:center}
+  footer p{color:var(--text3);font-size:.8rem}
+  footer a{color:var(--text2)}
+  footer a:hover{color:var(--text)}
+
+  @media(max-width:640px){
+    .hero h1{font-size:2.2rem}
+    .hero .tagline{font-size:1rem}
+    .features{grid-template-columns:1fr}
+    .stats{gap:24px}
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a href="#" class="logo">💴 PayTick</a>
+    <div class="nav-right">
+      <button class="lang-toggle" id="langToggle">EN</button>
+      <a href="https://github.com/yueseqaz/PayTick" class="nav-link" target="_blank">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero -->
+<div class="hero">
+  <div class="wrap">
+    <h1><span data-i18n="heroTitle1">看着薪水</span><span class="grad-text" data-i18n="heroTitle2">一秒一秒</span><span data-i18n="heroTitle3">往上涨</span></h1>
+    <p class="tagline" data-i18n="heroTag">macOS 菜单栏应用，<strong>实时追踪你的工资金额</strong>，还有考勤管理、Excel 导出、下班提醒</p>
+    <div class="cta-row">
+      <a href="#install" class="btn btn-primary">
+        <span data-i18n="download">下载安装</span>
+      </a>
+      <a href="https://github.com/yueseqaz/PayTick" class="btn btn-secondary" target="_blank">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.4.5 0 5.9 0 12.5c0 5.3 3.4 9.8 8.2 11.4.6.1.8-.3.8-.6v-2c-3.3.7-4-1.6-4-1.6-.5-1.4-1.3-1.8-1.3-1.8-1.1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1.1 1.8 2.8 1.3 3.5 1 .1-.8.4-1.3.8-1.6-2.7-.3-5.5-1.3-5.5-5.9 0-1.3.5-2.4 1.2-3.2-.1-.3-.5-1.5.1-3.2 0 0 1-.3 3.3 1.2a11.5 11.5 0 016 0C17.3 4.7 18.3 5 18.3 5c.6 1.7.2 2.9.1 3.2.8.8 1.2 1.9 1.2 3.2 0 4.6-2.8 5.6-5.5 5.9.4.4.8 1.1.8 2.2v3.3c0 .3.2.7.8.6A12 12 0 0024 12.5C24 5.9 18.6.5 12 .5z"/></svg>
+        GitHub
+      </a>
+    </div>
+
+    <!-- Menu bar mockup -->
+    <div class="menubar-mock">
+      <div class="menubar-bar">
+        <div class="menubar-left">
+          <div class="menubar-logo"></div>
+          <span>PayTick</span>
+        </div>
+        <div class="menubar-items">
+          <div class="menubar-item">
+            <span class="menubar-time" data-i18n="mockTime">4H 23M</span>
+          </div>
+          <div class="menubar-item">
+            <span class="menubar-amount">¥187.50</span>
+          </div>
+          <div class="menubar-item menubar-status">
+            <span>🍴</span>
+            <span data-i18n="mockStatus">午休中</span>
+            <span class="menubar-amount">¥150.00</span>
+          </div>
+        </div>
+        <div class="menubar-right">
+          <div class="menubar-icon"></div>
+          <div class="menubar-icon"></div>
+          <div class="menubar-icon"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Features -->
+<section>
+  <div class="wrap">
+    <div class="section-title">
+      <h2 data-i18n="featuresTitle">功能特性</h2>
+      <p data-i18n="featuresSub">一切为了让你更清楚地知道自己在赚什么</p>
+    </div>
+    <div class="features">
+      <div class="feature">
+        <div class="feature-icon" style="background:rgba(124,92,255,.15);color:#7c5cff">⏱️</div>
+        <h3 data-i18n="f1Title">实时工资追踪</h3>
+        <p data-i18n="f1Desc">菜单栏每秒更新今日已赚金额，两行紧凑倒计时显示距离下班还有多少小时多少分钟</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:rgba(61,214,140,.15);color:#3dd68c">🧭</div>
+        <h3 data-i18n="f2Title">状态感知菜单栏</h3>
+        <p data-i18n="f2Desc">上班前显示"还未上班"，午休显示"午休中"+已赚金额，下班后显示"已下班"，周末显示"周末休息"</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:rgba(77,159,255,.15);color:#4d9fff">📅</div>
+        <h3 data-i18n="f3Title">考勤管理</h3>
+        <p data-i18n="f3Desc">月历视图手动打卡，5 种考勤状态（出勤/加班/请假/休息/其他），周末自动显示休息，数据持久化在 UserDefaults</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:rgba(255,159,67,.15);color:#ff9f43">📊</div>
+        <h3 data-i18n="f4Title">Excel 导出</h3>
+        <p data-i18n="f4Desc">纯 Swift 手写 OOXML 生成 .xlsx 文件，支持本月/本年/指定日期范围导出，状态颜色 + 周末合并 + 统计汇总</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:rgba(255,107,107,.15);color:#ff6b6b">🔔</div>
+        <h3 data-i18n="f5Title">下班提醒</h3>
+        <p data-i18n="f5Desc">下班前 N 分钟系统通知 + 菜单栏金额变橙色，提醒分钟数 1-60 可调，同日去重不重复通知</p>
+      </div>
+      <div class="feature">
+        <div class="feature-icon" style="background:rgba(124,92,255,.15);color:#7c5cff">🌐</div>
+        <h3 data-i18n="f6Title">双语 UI</h3>
+        <p data-i18n="f6Desc">运行时切换 English / 简体中文，重启保留，菜单栏、弹窗、考勤窗口全部本地化</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Stats -->
+<section style="padding:40px 0">
+  <div class="wrap">
+    <div class="stats">
+      <div class="stat"><div class="num grad-text">5</div><div class="label" data-i18n="stat1">考勤状态</div></div>
+      <div class="stat"><div class="num grad-text">3</div><div class="label" data-i18n="stat2">导出模式</div></div>
+      <div class="stat"><div class="num grad-text">0</div><div class="label" data-i18n="stat3">第三方依赖</div></div>
+      <div class="stat"><div class="num grad-text">13+</div><div class="label" data-i18n="stat4">macOS 版本</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- Install -->
+<section id="install">
+  <div class="wrap">
+    <div class="section-title">
+      <h2 data-i18n="installTitle">安装</h2>
+      <p data-i18n="installSub">两种方式，任你选择</p>
+    </div>
+    <div style="max-width:560px;margin:0 auto">
+      <div class="install-cmd" onclick="copyCmd(this)">
+        <span><span style="color:var(--text3)">$</span> <span class="cmd">brew tap yueseqaz/paytick https://github.com/yueseqaz/PayTick.git && brew install --cask paytick</span></span>
+        <span class="copy-hint" data-i18n="copy">点击复制</span>
+      </div>
+      <p style="text-align:center;color:var(--text3);font-size:.8rem;margin-bottom:24px" data-i18n="orBuild">或从源码构建：</p>
+      <div class="install-cmd" onclick="copyCmd(this)">
+        <span><span style="color:var(--text3)">$</span> <span class="cmd">git clone https://github.com/yueseqaz/PayTick.git && cd PayTick && ./build.sh</span></span>
+        <span class="copy-hint" data-i18n="copy">点击复制</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer>
+  <div class="wrap">
+    <p>PayTick 💴 · MIT License · <a href="https://github.com/yueseqaz/PayTick" target="_blank">GitHub</a> · <a href="https://forum.qoder.com/" target="_blank" data-i18n="support">支持论坛</a></p>
+  </div>
+</footer>
+
+<script>
+const i18n={
+  zh:{
+    heroTitle1:"看着薪水",heroTitle2:"一秒一秒",heroTitle3:"往上涨",
+    heroTag:'macOS 菜单栏应用，<strong>实时追踪你的工资金额</strong>，还有考勤管理、Excel 导出、下班提醒',
+    download:"下载安装",
+    mockTime:"4H 23M",mockStatus:"午休中",
+    featuresTitle:"功能特性",featuresSub:"一切为了让你更清楚地知道自己在赚什么",
+    f1Title:"实时工资追踪",f1Desc:"菜单栏每秒更新今日已赚金额，两行紧凑倒计时显示距离下班还有多少小时多少分钟",
+    f2Title:"状态感知菜单栏",f2Desc:'上班前显示"还未上班"，午休显示"午休中"+已赚金额，下班后显示"已下班"，周末显示"周末休息"',
+    f3Title:"考勤管理",f3Desc:"月历视图手动打卡，5 种考勤状态（出勤/加班/请假/休息/其他），周末自动显示休息，数据持久化在 UserDefaults",
+    f4Title:"Excel 导出",f4Desc:"纯 Swift 手写 OOXML 生成 .xlsx 文件，支持本月/本年/指定日期范围导出，状态颜色 + 周末合并 + 统计汇总",
+    f5Title:"下班提醒",f5Desc:"下班前 N 分钟系统通知 + 菜单栏金额变橙色，提醒分钟数 1-60 可调，同日去重不重复通知",
+    f6Title:"双语 UI",f6Desc:"运行时切换 English / 简体中文，重启保留，菜单栏、弹窗、考勤窗口全部本地化",
+    stat1:"考勤状态",stat2:"导出模式",stat3:"第三方依赖",stat4:"macOS 版本",
+    installTitle:"安装",installSub:"两种方式，任你选择",
+    copy:"点击复制",orBuild:"或从源码构建：",support:"支持论坛"
+  },
+  en:{
+    heroTitle1:"Watch your earnings",heroTitle2:"tick up",heroTitle3:"second by second",
+    heroTag:'A macOS menu bar app that <strong>tracks your salary in real time</strong>, with attendance tracking, Excel export, and clock-out reminders',
+    download:"Get PayTick",
+    mockTime:"4H 23M",mockStatus:"On break",
+    featuresTitle:"Features",featuresSub:"Everything you need to know exactly what your time is worth",
+    f1Title:"Real-time salary tracking",f1Desc:"The menu bar updates every second with today's earned amount, plus a compact two-line H/M countdown to clock-out",
+    f2Title:"State-aware menu bar",f2Desc:'Shows "Not started" before work, "On break" with earned amount during lunch, "Done for today" after work, "Weekend off" on weekends',
+    f3Title:"Attendance tracking",f3Desc:"Monthly calendar with manual clock-in, 5 attendance statuses (work/overtime/leave/rest/other), weekend auto-rest, persisted in UserDefaults",
+    f4Title:"Excel export",f4Desc:"Pure Swift hand-written OOXML generates .xlsx files — this month / this year / custom date range, with status colors, weekend merge, and stats summary",
+    f5Title:"Clock-out reminder",f5Desc:"System notification + orange menu bar amount N minutes before shift end, configurable 1-60 min, deduplicated per day",
+    f6Title:"Bilingual UI",f6Desc:"Switch between English / 简体中文 at runtime, persisted across launches — menu bar, popover, and attendance window fully localized",
+    stat1:"Attendance statuses",stat2:"Export modes",stat3:"Third-party deps",stat4:"macOS version",
+    installTitle:"Installation",installSub:"Two ways, your choice",
+    copy:"Click to copy",orBuild:"Or build from source:",support:"Support"
+  }
+};
+let lang="zh";
+const toggle=document.getElementById("langToggle");
+function applyLang(){
+  document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const k=el.dataset.i18n;
+    if(i18n[lang][k]) el.innerHTML=i18n[lang][k];
+  });
+  toggle.textContent=lang==="zh"?"EN":"中文";
+  document.documentElement.lang=lang==="zh"?"zh-CN":"en";
+}
+toggle.addEventListener("click",()=>{lang=lang==="zh"?"en":"zh";applyLang()});
+applyLang();
+
+function copyCmd(el){
+  const cmd=el.querySelector(".cmd").textContent;
+  navigator.clipboard.writeText(cmd).then(()=>{
+    const hint=el.querySelector(".copy-hint");
+    const orig=hint.textContent;
+    hint.textContent=lang==="zh"?"已复制 ✓":"Copied ✓";
+    setTimeout(()=>hint.textContent=orig,1500);
+  });
+}
+</script>
+</body>
+</html>
