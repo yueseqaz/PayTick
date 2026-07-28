@@ -22,16 +22,16 @@ A macOS menu bar app that ticks your earnings in real time — watch your salary
 - **Menu bar only** — no Dock icon (LSUIElement), clean and unobtrusive
 - **Bilingual UI** — runtime switch between English / 简体中文, persisted across launches
 
-### Attendance module (independent of MySQL)
+### Attendance module
 
-A standalone replication of a PHP+MySQL attendance-tracking web app, built natively into PayTick. No database connection — all data persists in `UserDefaults`.
+A native attendance tracker built into PayTick. No database connection — all data persists in `UserDefaults`.
 
 - **Manual clock-in** — pick morning/afternoon status + note for any day via a day-editor sheet
 - **5 attendance statuses** — work / overtime / leave / rest / other (each with SF Symbol + color)
 - **Monthly calendar grid** — 7×6 stable layout with today highlight and prev/next month navigation
 - **Weekend auto-rest** — Saturday/Sunday cells with no record automatically display "休息"; if you mark a weekend day as overtime, that overrides
 - **Stats bar** — per-status counts + total record count for the displayed month
-- **Excel export (.xlsx)** — true OOXML generated in pure Swift (no third-party libraries), 100% matching the reference PHP project's PhpSpreadsheet output: title merge, blue header, per-status cell colors (work=#C6EFCE / overtime=#FCE4D6 / leave=#B4C6E7 / rest=#E5E7EB / other=#FFEB9C), merged weekend cells ("周末休息"), bottom stats summary with "X 班" shift counts (half-day count / 2), proper column widths and thin borders
+- **Excel export (.xlsx)** — true OOXML generated in pure Swift (no third-party libraries): title merge, blue header, per-status cell colors (work=#C6EFCE / overtime=#FCE4D6 / leave=#B4C6E7 / rest=#E5E7EB / other=#FFEB9C), merged weekend cells ("周末休息"), bottom stats summary with "X 班" shift counts (half-day count / 2), proper column widths and thin borders
 - **Three export modes** — "本月" (this month) / "本年" (this year) / "指定日期" (custom date range via DatePicker sheet)
 - **JSON import** — one-time data migration from MySQL export (snake_case schema: `record_date` / `period` / `status` / `note` / `created_at` / `updated_at`)
 
@@ -91,7 +91,7 @@ The menu bar label is rendered with `NSStatusBarButton.image` for the compact tw
 - `NSStatusItem` + `NSPopover` (no SwiftUI MenuBarExtra — for finer color control)
 - `UserNotifications` framework for clock-out alerts
 - Pure `swiftc` CLI build (no Xcode project, no SPM)
-- Real .xlsx output via hand-written OOXML + `/usr/bin/zip -X` (no PhpSpreadsheet, no third-party Swift packages)
+- Real .xlsx output via hand-written OOXML + `/usr/bin/zip -X` (no third-party Swift packages)
 
 ## Project structure
 

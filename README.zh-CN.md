@@ -22,16 +22,16 @@
 - **纯菜单栏**——不占 Dock 图标（LSUIElement），干净不打扰
 - **双语 UI**——运行时切换 English / 简体中文，重启保留
 
-### 考勤模块（不依赖 MySQL）
+### 考勤模块
 
-PHP+MySQL 考勤 Web 应用的独立复刻版，原生内置于 PayTick。无需数据库连接，所有数据持久化在 `UserDefaults` 中。
+原生考勤模块，内置于 PayTick。无需数据库连接，所有数据持久化在 `UserDefaults` 中。
 
 - **手动打卡**——通过日期编辑面板选择上午 / 下午状态 + 备注
 - **5 种考勤状态**——出勤 / 加班 / 请假 / 休息 / 其他（各有 SF Symbol + 颜色）
 - **月历网格**——7×6 稳定布局，今日高亮，支持上 / 下月切换
 - **周末自动休息**——周六 / 周日无记录时自动显示"休息"；若手动标为加班则覆盖
 - **统计栏**——按状态统计条数 + 当月记录总数
-- **Excel 导出（.xlsx）**——纯 Swift 手写 OOXML 生成（无第三方库），100% 对齐参考 PHP 项目的 PhpSpreadsheet 输出：标题合并、蓝色表头、按状态单元格颜色（出勤=#C6EFCE / 加班=#FCE4D6 / 请假=#B4C6E7 / 休息=#E5E7EB / 其他=#FFEB9C）、周末合并单元格（"周末休息"）、底部统计汇总"X 班"（半天数 / 2）、列宽与细边框
+- **Excel 导出（.xlsx）**——纯 Swift 手写 OOXML 生成（无第三方库）：标题合并、蓝色表头、按状态单元格颜色（出勤=#C6EFCE / 加班=#FCE4D6 / 请假=#B4C6E7 / 休息=#E5E7EB / 其他=#FFEB9C）、周末合并单元格（"周末休息"）、底部统计汇总"X 班"（半天数 / 2）、列宽与细边框
 - **三种导出模式**——"本月" / "本年" / "指定日期"（通过 DatePicker 面板选择自定义日期范围）
 - **JSON 导入**——从 MySQL 导出的一次性数据迁移（snake_case 字段：`record_date` / `period` / `status` / `note` / `created_at` / `updated_at`）
 
@@ -93,7 +93,7 @@ PayTick 按 `日薪 / 总工作秒数` 计算每秒工资，其中 `总工作秒
 - `UserNotifications` 框架发下班通知
 - 纯 `swiftc` 命令行构建（无 Xcode 工程、无 SPM）
 - 自实现 i18n 模块（运行时切换 EN / 简体中文，单例 ObservableObject + 字符串表）
-- 真 .xlsx 输出：纯 Swift 手写 OOXML + `/usr/bin/zip -X` 打包（无 PhpSpreadsheet，无第三方 Swift 包）
+- 真 .xlsx 输出：纯 Swift 手写 OOXML + `/usr/bin/zip -X` 打包（无第三方 Swift 包）
 
 ## 项目结构
 
