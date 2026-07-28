@@ -128,7 +128,8 @@ struct AttendanceView: View {
                 Text(label)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.secondary)
-                    .frame(maxWidth: .infinity)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.leading, 4)
             }
         }
         .padding(.horizontal, 8)
