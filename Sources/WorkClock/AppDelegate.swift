@@ -2,13 +2,15 @@ import AppKit
 import SwiftUI
 import UserNotifications
 
-final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
+final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWindowDelegate {
     private var statusItem: NSStatusItem!
     private var popover: NSPopover!
     private var settingsWindow: NSWindow?
     private var attendanceWindow: NSWindow?
     private var refreshTimer: Timer?
     private var eventMonitor: Any?
+    private var lastState: WorkState?
+    private var lastAmountStr: String?
 
     let store = ScheduleStore()
     let calculator = SalaryCalculator()
@@ -23,22 +25,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         statusItem.button?.action = #selector(togglePopover(_:))
         statusItem.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
 
-        let mainView = MainPanelView()
-            .environmentObject(store)
-            .environmentObject(calculator)
-            .environmentObject(notifier)
-            .environmentObject(self)
-            .environmentObject(attendanceStore)
-            .environmentObject(Localization.shared)
         popover = NSPopover()
         popover.behavior = .transient
-        popover.contentViewController = NSHostingController(rootView: mainView)
         popover.contentSize = NSSize(width: 360, height: 480)
 
         // 点击菜单栏外区域自动收起 popover
         eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
             guard let self = self, self.popover.isShown else { return }
-            self.popover.performClose(nil)
+            self.closePopover()
         }
 
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -55,10 +49,29 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         refreshTimer?.invalidate()
     }
 
+    // NSWindowDelegate: 窗口关闭时释放引用，减少内存
+    func windowWillClose(_ notification: Notification) {
+        guard let window = notification.object as? NSWindow else { return }
+        if window === settingsWindow {
+            settingsWindow = nil
+        } else if window === attendanceWindow {
+            attendanceWindow = nil
+        }
+    }
+
     private func tick() {
         calculator.recompute(now: Date(), schedule: store.schedule)
-        updateMenuBarTitle()
         notifier.checkAndFire(calculator: calculator, schedule: store.schedule)
+
+        // 非工作时段：状态和金额不变时跳过菜单栏更新
+        let amountStr = Self.currencyFormatter.string(from: NSNumber(value: calculator.earnedToday)) ?? "¥0.00"
+        if calculator.state == lastState && amountStr == lastAmountStr {
+            // 只检查状态是否需要切换（如从 beforeWork 进入 morning）
+            return
+        }
+        lastState = calculator.state
+        lastAmountStr = amountStr
+        updateMenuBarTitle()
     }
 
     private func updateMenuBarTitle() {
@@ -93,7 +106,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             let secs = max(0, Int(calculator.secondsUntilOff))
             let hours = secs / 3600
             let minutes = (secs % 3600) / 60
-            button?.image = makeCountdownImage(hours: hours, minutes: minutes, isWarning: isWarning)
+            button?.image = autoreleasepool { makeCountdownImage(hours: hours, minutes: minutes, isWarning: isWarning) }
             button?.imagePosition = .imageLeft
             button?.imageScaling = .scaleProportionallyDown
             button?.attributedTitle = NSAttributedString(string: " \(amountStr) ", attributes: [
@@ -156,8 +169,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
 
     @objc func togglePopover(_ sender: Any?) {
         if popover.isShown {
-            popover.performClose(nil)
+            closePopover()
         } else if let button = statusItem.button {
+            // 懒加载：仅打开时创建 SwiftUI 视图树
+            let mainView = MainPanelView()
+                .environmentObject(store)
+                .environmentObject(calculator)
+                .environmentObject(notifier)
+                .environmentObject(self)
+                .environmentObject(attendanceStore)
+                .environmentObject(Localization.shared)
+            popover.contentViewController = NSHostingController(rootView: mainView)
             popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
         }
     }
@@ -166,6 +188,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
         if popover.isShown {
             popover.performClose(nil)
         }
+        // 销毁视图树释放内存
+        popover.contentViewController = nil
     }
 
     func openSettings() {
@@ -178,7 +202,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             let window = NSWindow(contentViewController: controller)
             window.title = Localization.shared.t("settingsWindowTitle")
             window.styleMask = [.titled, .closable, .miniaturizable]
-            window.isReleasedWhenClosed = false
+            window.isReleasedWhenClosed = true
+            window.delegate = self
             centerWindow(window, defaultSize: NSSize(width: 420, height: 520))
             settingsWindow = window
         }
@@ -199,7 +224,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
             window.titleVisibility = .hidden
             window.titlebarAppearsTransparent = true
-            window.isReleasedWhenClosed = false
+            window.isReleasedWhenClosed = true
+            window.delegate = self
             centerWindow(window, defaultSize: NSSize(width: 760, height: 620))
             window.minSize = NSSize(width: 600, height: 520)
             attendanceWindow = window
