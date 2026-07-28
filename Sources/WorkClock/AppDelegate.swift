@@ -196,7 +196,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject {
             let controller = NSHostingController(rootView: view)
             let window = NSWindow(contentViewController: controller)
             window.title = Localization.shared.t("attendanceWindowTitle")
-            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
+            window.styleMask = [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView]
+            window.titleVisibility = .hidden
+            window.titlebarAppearsTransparent = true
             window.isReleasedWhenClosed = false
             centerWindow(window, defaultSize: NSSize(width: 760, height: 620))
             window.minSize = NSSize(width: 600, height: 520)

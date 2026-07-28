@@ -27,7 +27,7 @@ struct AttendanceView: View {
             Divider()
             statsBar
         }
-        .padding(.top, 4)
+        .padding(.top, 28)
         .background(Color(nsColor: .windowBackgroundColor))
         .sheet(item: Binding(
             get: { editingDay.map { IdentifiableDate(date: $0) } },
