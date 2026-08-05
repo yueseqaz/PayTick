@@ -97,22 +97,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
                                text: Localization.shared.t("menuBarAfterWork"),
                                font: menuFont, color: textColor)
         case .lunchBreak:
-            // 午休时段：图标 + "午休中" + 上午已赚金额
-            applySymbolAndText(button: button, symbol: "fork.knife",
-                               text: "\(Localization.shared.t("menuBarLunchBreak"))\(amountStr) ",
-                               font: menuFont, color: textColor)
+            // 午休时段：上下两行 — 午休中 + 金额
+            button?.image = autoreleasepool {
+                makeStackedImage(top: Localization.shared.t("menuBarLunchBreak").trimmingCharacters(in: .whitespaces),
+                                 bottom: amountStr, isWarning: false)
+            }
+            button?.imagePosition = .imageOnly
+            button?.imageScaling = .scaleProportionallyDown
+            button?.attributedTitle = NSAttributedString(string: "")
         case .morning, .afternoon:
-            // 工作时段：两行 H/M 倒计时 + 金额
+            // 工作时段：上下两行 — 倒计时 + 金额
             let secs = max(0, Int(calculator.secondsUntilOff))
             let hours = secs / 3600
             let minutes = (secs % 3600) / 60
-            button?.image = autoreleasepool { makeCountdownImage(hours: hours, minutes: minutes, isWarning: isWarning) }
-            button?.imagePosition = .imageLeft
+            let topStr = hours > 0 ? "\(hours)H\(minutes)M" : "\(minutes)M"
+            button?.image = autoreleasepool {
+                makeStackedImage(top: topStr, bottom: amountStr, isWarning: isWarning)
+            }
+            button?.imagePosition = .imageOnly
             button?.imageScaling = .scaleProportionallyDown
-            button?.attributedTitle = NSAttributedString(string: " \(amountStr) ", attributes: [
-                .font: menuFont,
-                .foregroundColor: textColor
-            ])
+            button?.attributedTitle = NSAttributedString(string: "")
         }
         button?.toolTip = (calculator.state == .morning || calculator.state == .afternoon)
             ? Localization.shared.t("toolTipUntilOff", Int(calculator.secondsUntilOff/60))
@@ -133,36 +137,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
         ])
     }
 
-    /// 绘制两行紧凑的倒计时图片：上行 "{hours}H"，下行 "{minutes}M"
-    private func makeCountdownImage(hours: Int, minutes: Int, isWarning: Bool) -> NSImage {
-        let width: CGFloat = 30
-        let height: CGFloat = 22
-        let image = NSImage(size: NSSize(width: width, height: height))
-        image.lockFocus()
-
-        let hStr = "\(hours)H"
-        let mStr = "\(minutes)M"
+    /// 绘制上下两行紧凑图片：上行倒计时/状态文字，下行金额
+    private func makeStackedImage(top: String, bottom: String, isWarning: Bool) -> NSImage {
         let font = NSFont.monospacedDigitSystemFont(ofSize: 8.5, weight: .semibold)
-        // 警告时绘制橙色，普通时黑色（isTemplate=true 后会被系统 label 色替换，颜色无所谓）
         let drawColor: NSColor = isWarning ? .systemOrange : .black
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
             .foregroundColor: drawColor
         ]
-        let hSize = (hStr as NSString).size(withAttributes: attrs)
-        let mSize = (mStr as NSString).size(withAttributes: attrs)
 
-        // H 在上
-        let hX = (width - hSize.width) / 2
-        let hY = height - hSize.height - 1
-        (hStr as NSString).draw(at: NSPoint(x: hX, y: hY), withAttributes: attrs)
-        // M 在下
-        let mX = (width - mSize.width) / 2
-        let mY: CGFloat = 1
-        (mStr as NSString).draw(at: NSPoint(x: mX, y: mY), withAttributes: attrs)
+        let topSize = (top as NSString).size(withAttributes: attrs)
+        let bottomSize = (bottom as NSString).size(withAttributes: attrs)
+
+        let pad: CGFloat = 2
+        let width = max(topSize.width, bottomSize.width) + pad * 2
+        let height = topSize.height + bottomSize.height + 1
+        let image = NSImage(size: NSSize(width: width, height: height))
+        image.lockFocus()
+
+        let topX = (width - topSize.width) / 2
+        let topY = height - topSize.height
+        (top as NSString).draw(at: NSPoint(x: topX, y: topY), withAttributes: attrs)
+
+        let bottomX = (width - bottomSize.width) / 2
+        let bottomY: CGFloat = 0
+        (bottom as NSString).draw(at: NSPoint(x: bottomX, y: bottomY), withAttributes: attrs)
 
         image.unlockFocus()
-        // 普通状态用 template 跟随系统 label 色（明暗自适应），警告状态用绘制的橙色固定
         image.isTemplate = !isWarning
         return image
     }
