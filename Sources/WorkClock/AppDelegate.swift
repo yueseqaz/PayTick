@@ -139,7 +139,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
 
     /// 绘制上下两行紧凑图片：上行倒计时/状态文字，下行金额
     private func makeStackedImage(top: String, bottom: String, isWarning: Bool) -> NSImage {
-        let font = NSFont.monospacedDigitSystemFont(ofSize: 8.5, weight: .semibold)
+        let font = NSFont.monospacedDigitSystemFont(ofSize: 8.5, weight: .heavy)
         let drawColor: NSColor = isWarning ? .systemOrange : .black
         let attrs: [NSAttributedString.Key: Any] = [
             .font: font,
