@@ -68,7 +68,7 @@ struct AttendanceView: View {
             .help(l10n.t("attendancePrevMonth"))
 
             Text(monthTitleText)
-                .font(.headline)
+                .font(.title3.weight(.bold))
                 .frame(minWidth: 140)
 
             Button {
@@ -126,7 +126,7 @@ struct AttendanceView: View {
         HStack(spacing: 4) {
             ForEach(weekdayLabels, id: \.self) { label in
                 Text(label)
-                    .font(.caption.weight(.semibold))
+                    .font(.callout.weight(.bold))
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.leading, 4)
@@ -375,9 +375,9 @@ private struct DayCellView: View {
 
     var body: some View {
         if isInMonth {
-            VStack(spacing: 3) {
+            VStack(spacing: 4) {
                 Text("\(Calendar.current.component(.day, from: day))")
-                    .font(.caption.weight(isToday ? .bold : .regular))
+                    .font(.callout.weight(isToday ? .bold : .semibold))
                     .foregroundStyle(.primary)
                     .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -385,14 +385,14 @@ private struct DayCellView: View {
                     if let rec = records.first(where: { $0.period == period }) {
                         HStack(spacing: 2) {
                             Image(systemName: rec.status.symbol)
-                                .font(.system(size: 8))
+                                .font(.system(size: 9))
                                 .foregroundStyle(rec.status.color)
                             Text(rec.status.displayName)
-                                .font(.system(size: 9))
+                                .font(.system(size: 10, weight: .medium))
                                 .foregroundStyle(.secondary)
                             if !rec.note.isEmpty {
                                 Image(systemName: "note.text")
-                                    .font(.system(size: 8))
+                                    .font(.system(size: 9))
                                     .foregroundStyle(.secondary)
                             }
                         }
@@ -401,10 +401,10 @@ private struct DayCellView: View {
                     } else if isWeekend {
                         HStack(spacing: 2) {
                             Image(systemName: AttendanceStatus.rest.symbol)
-                                .font(.system(size: 8))
+                                .font(.system(size: 9))
                                 .foregroundStyle(AttendanceStatus.rest.color.opacity(0.7))
                             Text(AttendanceStatus.rest.displayName)
-                                .font(.system(size: 9))
+                                .font(.system(size: 10, weight: .medium))
                                 .foregroundStyle(.tertiary)
                         }
                         .lineLimit(1)
@@ -412,7 +412,7 @@ private struct DayCellView: View {
                     }
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 44, alignment: .top)
+            .frame(maxWidth: .infinity, minHeight: 48, alignment: .top)
             .padding(4)
             .background(
                 RoundedRectangle(cornerRadius: 6)

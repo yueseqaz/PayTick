@@ -3,11 +3,12 @@ import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWindowDelegate {
     private var statusItem: NSStatusItem!
-    private var popover: NSPopover!
+    private var panel: NSPanel?
     private var settingsWindow: NSWindow?
     private var attendanceWindow: NSWindow?
     private var refreshTimer: Timer?
-    private var eventMonitor: Any?
+    private var localEventMonitor: Any?
+    private var globalEventMonitor: Any?
     private var lastState: WorkState?
     private var lastAmountStr: String?
 
@@ -31,14 +32,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
         statusItem.button?.action = #selector(togglePopover(_:))
         statusItem.button?.sendAction(on: [.leftMouseDown, .rightMouseDown])
 
-        popover = NSPopover()
-        popover.behavior = .transient
-        popover.contentSize = NSSize(width: 360, height: 480)
-
-        // 点击菜单栏外区域自动收起 popover
-        eventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
-            guard let self = self, self.popover.isShown else { return }
-            self.closePopover()
+        // 点击 panel 外区域自动收起
+        localEventMonitor = NSEvent.addLocalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] event in
+            guard let self = self, self.panel?.isVisible == true else { return event }
+            if event.window === self.panel { return event }
+            self.hidePanel()
+            return event
+        }
+        globalEventMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            guard let self = self, self.panel?.isVisible == true else { return }
+            self.hidePanel()
         }
 
         refreshTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
@@ -49,9 +52,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        if let monitor = eventMonitor {
-            NSEvent.removeMonitor(monitor)
-        }
+        if let local = localEventMonitor { NSEvent.removeMonitor(local) }
+        if let global = globalEventMonitor { NSEvent.removeMonitor(global) }
         refreshTimer?.invalidate()
     }
 
@@ -175,28 +177,69 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
     }
 
     @objc func togglePopover(_ sender: Any?) {
-        if popover.isShown {
-            popover.performClose(nil)
-        } else if let button = statusItem.button {
-            // 懒加载：首次打开时创建，后续复用
-            if popover.contentViewController == nil {
-                let mainView = MainPanelView()
-                    .environmentObject(store)
-                    .environmentObject(calculator)
-                    .environmentObject(notifier)
-                    .environmentObject(self)
-                    .environmentObject(attendanceStore)
-                    .environmentObject(Localization.shared)
-                popover.contentViewController = NSHostingController(rootView: mainView)
-            }
-            popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+        if panel?.isVisible == true {
+            hidePanel()
+        } else {
+            showPanel()
         }
     }
 
-    func closePopover() {
-        if popover.isShown {
-            popover.performClose(nil)
+    private func showPanel() {
+        if panel == nil {
+            let mainView = MainPanelView()
+                .environmentObject(store)
+                .environmentObject(calculator)
+                .environmentObject(notifier)
+                .environmentObject(self)
+                .environmentObject(attendanceStore)
+                .environmentObject(Localization.shared)
+            let controller = NSHostingController(rootView: mainView)
+            let p = NSPanel(contentViewController: controller)
+            p.styleMask = [.nonactivatingPanel, .titled, .fullSizeContentView]
+            p.titleVisibility = .hidden
+            p.titlebarAppearsTransparent = true
+            p.isMovable = false
+            p.hidesOnDeactivate = false
+            p.collectionBehavior = [.canJoinAllSpaces, .stationary]
+            p.isOpaque = false
+            p.hasShadow = true
+            p.level = .floating
+            p.setContentSize(NSSize(width: 360, height: 480))
+            panel = p
         }
+
+        // 定位到菜单栏图标正下方
+        if let button = statusItem.button,
+           let screen = NSScreen.main {
+            let btnFrame = button.window?.convertToScreen(button.frame) ?? .zero
+            let size = panel?.contentView?.frame.size ?? NSSize(width: 360, height: 480)
+            var x = btnFrame.midX - size.width / 2
+            // 边界保护：不超出屏幕
+            x = max(screen.visibleFrame.minX, min(x, screen.visibleFrame.maxX - size.width))
+            let y = screen.visibleFrame.maxY - size.height
+            panel?.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
+        }
+
+        panel?.alphaValue = 0
+        panel?.orderFrontRegardless()
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.2
+            panel?.animator().alphaValue = 1
+        })
+    }
+
+    private func hidePanel() {
+        guard let p = panel, p.isVisible else { return }
+        NSAnimationContext.runAnimationGroup({ ctx in
+            ctx.duration = 0.15
+            p.animator().alphaValue = 0
+        }, completionHandler: {
+            p.orderOut(nil)
+        })
+    }
+
+    func closePopover() {
+        hidePanel()
     }
 
     func openSettings() {
@@ -211,7 +254,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.isReleasedWhenClosed = false
             window.delegate = self
-            centerWindow(window, defaultSize: NSSize(width: 420, height: 720))
+            centerWindow(window, defaultSize: NSSize(width: 420, height: 560))
             settingsWindow = window
         }
         settingsWindow?.makeKeyAndOrderFront(nil)

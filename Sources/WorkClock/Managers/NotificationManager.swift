@@ -20,48 +20,56 @@ final class NotificationManager: ObservableObject {
         }
     }
 
-    /// 每秒调用：检查全部 7 种智能提醒条件
+    /// 每秒调用：检查全部 7 种智能提醒条件（基于绝对时间匹配）
     func checkAndFire(calculator: SalaryCalculator, schedule: WorkSchedule) {
         let cfg = schedule.reminderConfig
         let cal = Calendar.current
         let now = Date()
-        let hour = cal.component(.hour, from: now)
-        let minuteOfDay = hour * 60 + cal.component(.minute, from: now)
+        let minuteOfDay = cal.component(.hour, from: now) * 60 + cal.component(.minute, from: now)
         let weekday = cal.component(.weekday, from: now)
         let isWeekend = (weekday == 1 || weekday == 7)
         if isWeekend && !schedule.overtimeMode { return }
 
-        if cfg.morningStart && calculator.state == .morning {
+        // 1. 早安问候
+        if cfg.morningStart && minuteOfDay == cfg.morningStartMin {
             fireOnce(.morningStart, icon: "sun.max.fill",
                      title: L("notifMorningTitle"), body: L("notifMorningBody"))
         }
-        if cfg.preLunch {
-            let lunchStart = schedule.morningEndMin
-            let remindBefore = cfg.preLunchMinutes
-            if minuteOfDay >= lunchStart - remindBefore && minuteOfDay < lunchStart {
-                fireOnce(.preLunch, icon: "fork.knife",
-                         title: L("notifPreLunchTitle"), body: L("notifPreLunchBody", remindBefore))
-            }
+
+        // 2. 午休预告
+        if cfg.preLunch && minuteOfDay == cfg.preLunchMin {
+            let minsToLunch = max(0, cfg.lunchStartMin - cfg.preLunchMin)
+            fireOnce(.preLunch, icon: "fork.knife",
+                     title: L("notifPreLunchTitle"), body: L("notifPreLunchBody", minsToLunch))
         }
-        if cfg.lunchStart && calculator.state == .lunchBreak {
+
+        // 3. 午休开始
+        if cfg.lunchStart && minuteOfDay == cfg.lunchStartMin {
             fireOnce(.lunchStart, icon: "cup.and.saucer.fill",
                      title: L("notifLunchTitle"), body: L("notifLunchBody"))
         }
-        if cfg.afternoonStart && calculator.state == .afternoon {
+
+        // 4. 下午开始
+        if cfg.afternoonStart && minuteOfDay == cfg.afternoonStartMin {
             fireOnce(.afternoonStart, icon: "flame.fill",
                      title: L("notifAfternoonTitle"), body: L("notifAfternoonBody"))
         }
-        if cfg.clockOut && calculator.isInReminderWindow {
+
+        // 5. 下班提醒
+        if cfg.clockOut && minuteOfDay == cfg.clockOutMin {
+            let minsToOff = max(0, schedule.afternoonEndMin - cfg.clockOutMin)
             fireOnce(.clockOut, icon: "clock.badge.checkmark.fill",
-                     title: L("notifTitle"), body: L("notifBodyMinutes",
-                     Int(calculator.secondsUntilOff/60),
-                     Int(calculator.secondsUntilOff.truncatingRemainder(dividingBy: 60))))
+                     title: L("notifTitle"), body: L("notifBodyMinutes", minsToOff))
         }
-        if cfg.afterWork && calculator.state == .afterWork {
+
+        // 6. 下班了
+        if cfg.afterWork && minuteOfDay == cfg.afterWorkMin {
             fireOnce(.afterWork, icon: "party.popper.fill",
                      title: L("notifAfterWorkTitle"), body: L("notifAfterWorkBody"))
         }
-        if cfg.lateNight && hour >= cfg.lateNightHour && hour < 6 {
+
+        // 7. 晚安提醒
+        if cfg.lateNight && minuteOfDay == cfg.lateNightMin {
             fireOnce(.lateNight, icon: "moon.zzz.fill",
                      title: L("notifLateNightTitle"), body: L("notifLateNightBody"))
         }
@@ -75,7 +83,7 @@ final class NotificationManager: ObservableObject {
             (.preLunch, "fork.knife", L("notifPreLunchTitle"), L("notifPreLunchBody", 60)),
             (.lunchStart, "cup.and.saucer.fill", L("notifLunchTitle"), L("notifLunchBody")),
             (.afternoonStart, "flame.fill", L("notifAfternoonTitle"), L("notifAfternoonBody")),
-            (.clockOut, "clock.badge.checkmark.fill", L("notifTitle"), L("notifBodyMinutes", 3, 45)),
+            (.clockOut, "clock.badge.checkmark.fill", L("notifTitle"), L("notifBodyMinutes", 5)),
             (.afterWork, "party.popper.fill", L("notifAfterWorkTitle"), L("notifAfterWorkBody")),
             (.lateNight, "moon.zzz.fill", L("notifLateNightTitle"), L("notifLateNightBody")),
         ]

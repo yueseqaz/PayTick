@@ -33,6 +33,7 @@ swiftc \
 echo "[2/3] Assembling bundle..."
 
 cp "$PROJECT_ROOT/Resources/Info.plist" "$CONTENTS_DIR/Info.plist"
+cp "$PROJECT_ROOT/Resources/notif.mp3" "$RESOURCES_DIR/notif.mp3"
 echo -n "APPL????" > "$CONTENTS_DIR/PkgInfo"
 
 # 给可执行文件权限

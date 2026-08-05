@@ -49,7 +49,7 @@ enum L10n {
         "hourlyRateFormat": "¥%.2f/hr",
         "reminderSection": "Reminder",
         "remindMinutesBefore": "Remind %d min before clock-out",
-        "reminderMethodNote": "Via system notification + orange amount in menu bar",
+        "reminderMethodNote": "Menu bar amount turns orange during the countdown window",
         "weekendSection": "Weekend",
         "overtimeMode": "Overtime mode",
         "overtimeDescription": "When enabled, weekends also count earnings and reminders.",
@@ -98,7 +98,7 @@ enum L10n {
         "settingsWindowTitle": "PayTick Settings",
         "toolTipUntilOff": "PayTick · %d min until clock-out",
         "notifTitle": "Almost off",
-        "notifBodyMinutes": "%d min %d sec until clock-out — time to wrap up!",
+        "notifBodyMinutes": "%d min until clock-out — time to wrap up!",
         "notifBodySeconds": "%d sec until clock-out — go!",
         "notifMorningTitle": "Good morning",
         "notifMorningBody": "A fresh start — let's make today count",
@@ -111,7 +111,7 @@ enum L10n {
         "notifAfterWorkTitle": "Done for today",
         "notifAfterWorkBody": "Great work today — go enjoy your time now",
         "notifLateNightTitle": "Time to sleep",
-        "notifLateNightBody": "It's past midnight — get some rest, work awaits tomorrow",
+        "notifLateNightBody": "It's getting late — get some rest, work awaits tomorrow",
         "smartReminders": "Smart reminders",
         "reminderMorningStart": "Morning greeting",
         "reminderPreLunch": "Pre-lunch alert",
@@ -120,8 +120,9 @@ enum L10n {
         "reminderClockOut": "Clock-out alert",
         "reminderAfterWork": "Done for today",
         "reminderLateNight": "Late night rest",
-        "preLunchMinutes": "Remind %d min before lunch",
-        "lateNightHourLabel": "After %02d:00"
+        "settingsTabGeneral": "General",
+        "settingsTabSchedule": "Schedule",
+        "settingsTabReminders": "Reminders"
     ]
 
     static let chineseSimplified: [String: String] = [
@@ -157,7 +158,7 @@ enum L10n {
         "hourlyRateFormat": "¥%.2f/时",
         "reminderSection": "提醒",
         "remindMinutesBefore": "下班前 %d 分钟提醒",
-        "reminderMethodNote": "提醒方式：系统通知 + 菜单栏金额变橙色",
+        "reminderMethodNote": "倒计时阶段菜单栏金额变橙色",
         "weekendSection": "周末",
         "overtimeMode": "加班模式",
         "overtimeDescription": "开启后周末也会按工作时间累计工资并发送下班提醒。",
@@ -206,7 +207,7 @@ enum L10n {
         "settingsWindowTitle": "PayTick 设置",
         "toolTipUntilOff": "PayTick · 距下班 %d 分钟",
         "notifTitle": "快下班了",
-        "notifBodyMinutes": "还有 %d 分 %d 秒下班，准备收拾东西吧～",
+        "notifBodyMinutes": "还有 %d 分钟下班，准备收拾东西吧～",
         "notifBodySeconds": "还有 %d 秒就下班啦，准备冲！",
         "notifMorningTitle": "早安呀",
         "notifMorningBody": "新的一天开始啦，今天也要元气满满哦",
@@ -219,7 +220,7 @@ enum L10n {
         "notifAfterWorkTitle": "下班啦",
         "notifAfterWorkBody": "今天辛苦了，快去享受属于你的时间吧",
         "notifLateNightTitle": "该睡觉了",
-        "notifLateNightBody": "都零点过了哦，早点休息吧，明天还得打工呢",
+        "notifLateNightBody": "夜深了，早点休息吧，明天还得打工呢",
         "smartReminders": "智能提醒",
         "reminderMorningStart": "早安问候",
         "reminderPreLunch": "午休预告",
@@ -228,8 +229,9 @@ enum L10n {
         "reminderClockOut": "下班提醒",
         "reminderAfterWork": "下班了",
         "reminderLateNight": "晚安提醒",
-        "preLunchMinutes": "午休前 %d 分钟提醒",
-        "lateNightHourLabel": "%02d:00 后提醒"
+        "settingsTabGeneral": "通用",
+        "settingsTabSchedule": "工作时间",
+        "settingsTabReminders": "智能提醒"
     ]
 }
 

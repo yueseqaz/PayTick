@@ -4,122 +4,132 @@ struct SettingsPanelView: View {
     @EnvironmentObject var store: ScheduleStore
     @EnvironmentObject var l10n: Localization
     @Environment(\.dismiss) private var dismiss
+    @FocusState private var salaryFocused: Bool
 
     var body: some View {
         VStack(spacing: 0) {
-            Form {
-                Section(l10n.t("languageSection")) {
-                    Picker(l10n.t("languageSection"), selection: $l10n.language) {
-                        ForEach(AppLanguage.allCases, id: \.self) { lang in
-                            Text(lang.displayName).tag(lang)
+            TabView {
+                // Tab 1: 通用
+                Form {
+                    Section(l10n.t("languageSection")) {
+                        Picker(l10n.t("languageSection"), selection: $l10n.language) {
+                            ForEach(AppLanguage.allCases, id: \.self) { lang in
+                                Text(lang.displayName).tag(lang)
+                            }
                         }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
                     }
-                    .pickerStyle(.segmented)
-                    .labelsHidden()
-                }
-
-                Section(l10n.t("morningSection")) {
-                    timeRow(title: l10n.t("startTime"), minute: $store.schedule.morningStartMin)
-                    timeRow(title: l10n.t("endTime"), minute: $store.schedule.morningEndMin)
-                }
-                Section(l10n.t("afternoonSection")) {
-                    timeRow(title: l10n.t("startTime"), minute: $store.schedule.afternoonStartMin)
-                    timeRow(title: l10n.t("endTime"), minute: $store.schedule.afternoonEndMin)
-                }
-                Section {
-                    HStack {
-                        Text(l10n.t("dailySalary"))
-                        Spacer()
-                        TextField("",
-                            text: Binding(
-                                get: { String(format: "%.0f", store.schedule.dailySalary) },
-                                set: { newValue in
-                                    let filtered = newValue.filter { $0.isNumber || $0 == "." }
-                                    if let v = Double(filtered) {
-                                        store.schedule.dailySalary = v
-                                    } else if filtered.isEmpty {
-                                        store.schedule.dailySalary = 0
-                                    }
-                                }
-                            )
-                        )
-                        .multilineTextAlignment(.trailing)
-                        .frame(width: 120)
-                        .textFieldStyle(.roundedBorder)
+                    Section {
+                        HStack {
+                            Text(l10n.t("dailySalary"))
+                            Spacer()
+                            HStack(spacing: 4) {
+                                Text("¥")
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(.secondary)
+                                TextField("",
+                                    text: Binding(
+                                        get: { String(format: "%.0f", store.schedule.dailySalary) },
+                                        set: { newValue in
+                                            let filtered = newValue.filter { $0.isNumber || $0 == "." }
+                                            if let v = Double(filtered) {
+                                                store.schedule.dailySalary = v
+                                            } else if filtered.isEmpty {
+                                                store.schedule.dailySalary = 0
+                                            }
+                                        }
+                                    )
+                                )
+                                .multilineTextAlignment(.trailing)
+                                .frame(width: 90)
+                                .textFieldStyle(.roundedBorder)
+                                .focused($salaryFocused)
+                            }
+                        }
+                        HStack {
+                            Text(l10n.t("hourlyRateAuto"))
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            Text(computedHourlyRate)
+                                .monospacedDigit()
+                                .foregroundStyle(.secondary)
+                        }
+                    } header: {
+                        Text(l10n.t("salarySection"))
                     }
-                    HStack {
-                        Text(l10n.t("hourlyRateAuto"))
-                            .foregroundStyle(.secondary)
-                        Spacer()
-                        Text(computedHourlyRate)
-                            .monospacedDigit()
-                            .foregroundStyle(.secondary)
-                    }
-                } header: {
-                    Text(l10n.t("salarySection"))
-                }
-                Section {
-                    Stepper(l10n.t("remindMinutesBefore", store.schedule.reminderMinutes),
-                            value: $store.schedule.reminderMinutes, in: 1...60)
-                } header: {
-                    Text(l10n.t("reminderSection"))
-                } footer: {
-                    Text(l10n.t("reminderMethodNote"))
-                }
-                Section {
-                    Toggle(isOn: $store.schedule.reminderConfig.morningStart) {
-                        Label(l10n.t("reminderMorningStart"), systemImage: "sun.max")
-                    }
-                    Toggle(isOn: $store.schedule.reminderConfig.preLunch) {
-                        Label(l10n.t("reminderPreLunch"), systemImage: "fork.knife")
-                    }
-                    if store.schedule.reminderConfig.preLunch {
-                        Stepper(l10n.t("preLunchMinutes", store.schedule.reminderConfig.preLunchMinutes),
-                                value: $store.schedule.reminderConfig.preLunchMinutes, in: 15...120, step: 15)
+                    Section {
+                        Toggle(isOn: $store.schedule.overtimeMode) {
+                            Label(l10n.t("overtimeMode"), systemImage: "moon.fill")
+                        }
+                        Text(l10n.t("overtimeDescription"))
                             .font(.caption)
                             .foregroundStyle(.secondary)
+                    } header: {
+                        Text(l10n.t("weekendSection"))
                     }
-                    Toggle(isOn: $store.schedule.reminderConfig.lunchStart) {
-                        Label(l10n.t("reminderLunchStart"), systemImage: "cup.and.saucer.fill")
-                    }
-                    Toggle(isOn: $store.schedule.reminderConfig.afternoonStart) {
-                        Label(l10n.t("reminderAfternoonStart"), systemImage: "moon")
-                    }
-                    Toggle(isOn: $store.schedule.reminderConfig.clockOut) {
-                        Label(l10n.t("reminderClockOut"), systemImage: "clock.badge.checkmark.fill")
-                    }
-                    Toggle(isOn: $store.schedule.reminderConfig.afterWork) {
-                        Label(l10n.t("reminderAfterWork"), systemImage: "checkmark.circle.fill")
-                    }
-                    Toggle(isOn: $store.schedule.reminderConfig.lateNight) {
-                        Label(l10n.t("reminderLateNight"), systemImage: "moon.zzz.fill")
-                    }
-                    if store.schedule.reminderConfig.lateNight {
-                        Picker(l10n.t("lateNightHourLabel", store.schedule.reminderConfig.lateNightHour),
-                               selection: $store.schedule.reminderConfig.lateNightHour) {
-                            Text("22:00").tag(22)
-                            Text("23:00").tag(23)
-                            Text("00:00").tag(0)
-                            Text("01:00").tag(1)
-                        }
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                    }
-                } header: {
-                    Text(l10n.t("smartReminders"))
                 }
-                Section {
-                    Toggle(isOn: $store.schedule.overtimeMode) {
-                        Label(l10n.t("overtimeMode"), systemImage: "moon.fill")
+                .formStyle(.grouped)
+                .tabItem {
+                    Label(l10n.t("settingsTabGeneral"), systemImage: "gearshape")
+                }
+
+                // Tab 2: 工作时间
+                Form {
+                    Section(l10n.t("morningSection")) {
+                        timeRow(title: l10n.t("startTime"), minute: $store.schedule.morningStartMin)
+                        timeRow(title: l10n.t("endTime"), minute: $store.schedule.morningEndMin)
                     }
-                    Text(l10n.t("overtimeDescription"))
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                } header: {
-                    Text(l10n.t("weekendSection"))
+                    Section(l10n.t("afternoonSection")) {
+                        timeRow(title: l10n.t("startTime"), minute: $store.schedule.afternoonStartMin)
+                        timeRow(title: l10n.t("endTime"), minute: $store.schedule.afternoonEndMin)
+                    }
+                }
+                .formStyle(.grouped)
+                .tabItem {
+                    Label(l10n.t("settingsTabSchedule"), systemImage: "clock")
+                }
+
+                // Tab 3: 智能提醒
+                Form {
+                    Section {
+                        reminderRow(icon: "sun.max.fill", iconColor: .orange,
+                                    title: l10n.t("reminderMorningStart"),
+                                    isOn: $store.schedule.reminderConfig.morningStart,
+                                    minute: $store.schedule.reminderConfig.morningStartMin)
+                        reminderRow(icon: "fork.knife", iconColor: .blue,
+                                    title: l10n.t("reminderPreLunch"),
+                                    isOn: $store.schedule.reminderConfig.preLunch,
+                                    minute: $store.schedule.reminderConfig.preLunchMin)
+                        reminderRow(icon: "cup.and.saucer.fill", iconColor: .pink,
+                                    title: l10n.t("reminderLunchStart"),
+                                    isOn: $store.schedule.reminderConfig.lunchStart,
+                                    minute: $store.schedule.reminderConfig.lunchStartMin)
+                        reminderRow(icon: "flame.fill", iconColor: .red,
+                                    title: l10n.t("reminderAfternoonStart"),
+                                    isOn: $store.schedule.reminderConfig.afternoonStart,
+                                    minute: $store.schedule.reminderConfig.afternoonStartMin)
+                        reminderRow(icon: "clock.badge.checkmark.fill", iconColor: .purple,
+                                    title: l10n.t("reminderClockOut"),
+                                    isOn: $store.schedule.reminderConfig.clockOut,
+                                    minute: $store.schedule.reminderConfig.clockOutMin)
+                        reminderRow(icon: "party.popper.fill", iconColor: .green,
+                                    title: l10n.t("reminderAfterWork"),
+                                    isOn: $store.schedule.reminderConfig.afterWork,
+                                    minute: $store.schedule.reminderConfig.afterWorkMin)
+                        reminderRow(icon: "moon.zzz.fill", iconColor: .indigo,
+                                    title: l10n.t("reminderLateNight"),
+                                    isOn: $store.schedule.reminderConfig.lateNight,
+                                    minute: $store.schedule.reminderConfig.lateNightMin)
+                    } header: {
+                        Text(l10n.t("smartReminders"))
+                    }
+                }
+                .formStyle(.grouped)
+                .tabItem {
+                    Label(l10n.t("settingsTabReminders"), systemImage: "bell")
                 }
             }
-            .formStyle(.grouped)
 
             HStack {
                 Spacer()
@@ -131,8 +141,40 @@ struct SettingsPanelView: View {
             }
             .padding()
         }
-        .frame(width: 380, height: 780)
+        .frame(width: 420, height: 520)
+        .onAppear {
+            DispatchQueue.main.async {
+                salaryFocused = false
+            }
+        }
     }
+
+    // MARK: - Reminder row
+
+    private func reminderRow(icon: String, iconColor: Color, title: String, isOn: Binding<Bool>, minute: Binding<Int>) -> some View {
+        HStack(spacing: 10) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundStyle(iconColor)
+                .frame(width: 22)
+            Toggle(isOn: isOn) {
+                Text(title)
+            }
+            Spacer()
+            DatePicker(
+                "",
+                selection: Binding(
+                    get: { minuteToDate(minute.wrappedValue) },
+                    set: { minute.wrappedValue = dateToMinute($0) }
+                ),
+                displayedComponents: .hourAndMinute
+            )
+            .labelsHidden()
+            .disabled(!isOn.wrappedValue)
+        }
+    }
+
+    // MARK: - Helpers
 
     private func timeRow(title: String, minute: Binding<Int>) -> some View {
         HStack {

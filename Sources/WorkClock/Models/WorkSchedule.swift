@@ -1,17 +1,52 @@
 import Foundation
 import Combine
 
-/// 智能提醒配置
+/// 智能提醒配置（每个提醒独立开关 + 独立触发时间）
 struct ReminderConfig: Codable, Equatable {
     var morningStart: Bool = true
+    var morningStartMin: Int = 9 * 60       // 09:00
     var preLunch: Bool = true
+    var preLunchMin: Int = 11 * 60          // 11:00
     var lunchStart: Bool = true
+    var lunchStartMin: Int = 12 * 60        // 12:00
     var afternoonStart: Bool = true
+    var afternoonStartMin: Int = 13 * 60   // 13:00
     var clockOut: Bool = true
+    var clockOutMin: Int = 17 * 60 + 55    // 17:55
     var afterWork: Bool = true
+    var afterWorkMin: Int = 18 * 60         // 18:00
     var lateNight: Bool = true
-    var preLunchMinutes: Int = 60
-    var lateNightHour: Int = 0   // 0 = 午夜 00:00
+    var lateNightMin: Int = 0              // 00:00
+
+    enum CodingKeys: String, CodingKey {
+        case morningStart, morningStartMin
+        case preLunch, preLunchMin
+        case lunchStart, lunchStartMin
+        case afternoonStart, afternoonStartMin
+        case clockOut, clockOutMin
+        case afterWork, afterWorkMin
+        case lateNight, lateNightMin
+    }
+
+    init() {}
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        morningStart = try c.decodeIfPresent(Bool.self, forKey: .morningStart) ?? true
+        morningStartMin = try c.decodeIfPresent(Int.self, forKey: .morningStartMin) ?? 9 * 60
+        preLunch = try c.decodeIfPresent(Bool.self, forKey: .preLunch) ?? true
+        preLunchMin = try c.decodeIfPresent(Int.self, forKey: .preLunchMin) ?? 11 * 60
+        lunchStart = try c.decodeIfPresent(Bool.self, forKey: .lunchStart) ?? true
+        lunchStartMin = try c.decodeIfPresent(Int.self, forKey: .lunchStartMin) ?? 12 * 60
+        afternoonStart = try c.decodeIfPresent(Bool.self, forKey: .afternoonStart) ?? true
+        afternoonStartMin = try c.decodeIfPresent(Int.self, forKey: .afternoonStartMin) ?? 13 * 60
+        clockOut = try c.decodeIfPresent(Bool.self, forKey: .clockOut) ?? true
+        clockOutMin = try c.decodeIfPresent(Int.self, forKey: .clockOutMin) ?? 17 * 60 + 55
+        afterWork = try c.decodeIfPresent(Bool.self, forKey: .afterWork) ?? true
+        afterWorkMin = try c.decodeIfPresent(Int.self, forKey: .afterWorkMin) ?? 18 * 60
+        lateNight = try c.decodeIfPresent(Bool.self, forKey: .lateNight) ?? true
+        lateNightMin = try c.decodeIfPresent(Int.self, forKey: .lateNightMin) ?? 0
+    }
 }
 
 /// 工作时间表（用分钟数表示一天内的时间点，0..<24*60）
