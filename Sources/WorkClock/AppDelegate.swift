@@ -17,6 +17,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
     let attendanceStore = AttendanceStore()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        // 测试模式：UserDefaults 标记触发，依次弹全部 7 条提醒
+        if UserDefaults.standard.bool(forKey: "PayTick.testReminders") {
+            UserDefaults.standard.set(false, forKey: "PayTick.testReminders")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
+                self?.notifier.testAllReminders()
+            }
+            return
+        }
+
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePopover(_:))
