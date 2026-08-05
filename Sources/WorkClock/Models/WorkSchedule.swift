@@ -11,8 +11,6 @@ struct ReminderConfig: Codable, Equatable {
     var lunchStartMin: Int = 12 * 60        // 12:00
     var afternoonStart: Bool = true
     var afternoonStartMin: Int = 13 * 60   // 13:00
-    var clockOut: Bool = true
-    var clockOutMin: Int = 17 * 60 + 55    // 17:55
     var afterWork: Bool = true
     var afterWorkMin: Int = 18 * 60         // 18:00
     var lateNight: Bool = true
@@ -23,7 +21,6 @@ struct ReminderConfig: Codable, Equatable {
         case preLunch, preLunchMin
         case lunchStart, lunchStartMin
         case afternoonStart, afternoonStartMin
-        case clockOut, clockOutMin
         case afterWork, afterWorkMin
         case lateNight, lateNightMin
     }
@@ -40,8 +37,6 @@ struct ReminderConfig: Codable, Equatable {
         lunchStartMin = try c.decodeIfPresent(Int.self, forKey: .lunchStartMin) ?? 12 * 60
         afternoonStart = try c.decodeIfPresent(Bool.self, forKey: .afternoonStart) ?? true
         afternoonStartMin = try c.decodeIfPresent(Int.self, forKey: .afternoonStartMin) ?? 13 * 60
-        clockOut = try c.decodeIfPresent(Bool.self, forKey: .clockOut) ?? true
-        clockOutMin = try c.decodeIfPresent(Int.self, forKey: .clockOutMin) ?? 17 * 60 + 55
         afterWork = try c.decodeIfPresent(Bool.self, forKey: .afterWork) ?? true
         afterWorkMin = try c.decodeIfPresent(Int.self, forKey: .afterWorkMin) ?? 18 * 60
         lateNight = try c.decodeIfPresent(Bool.self, forKey: .lateNight) ?? true

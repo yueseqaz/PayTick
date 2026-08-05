@@ -109,10 +109,6 @@ struct SettingsPanelView: View {
                                     title: l10n.t("reminderAfternoonStart"),
                                     isOn: $store.schedule.reminderConfig.afternoonStart,
                                     minute: $store.schedule.reminderConfig.afternoonStartMin)
-                        reminderRow(icon: "clock.badge.checkmark.fill", iconColor: .purple,
-                                    title: l10n.t("reminderClockOut"),
-                                    isOn: $store.schedule.reminderConfig.clockOut,
-                                    minute: $store.schedule.reminderConfig.clockOutMin)
                         reminderRow(icon: "party.popper.fill", iconColor: .green,
                                     title: l10n.t("reminderAfterWork"),
                                     isOn: $store.schedule.reminderConfig.afterWork,

@@ -87,23 +87,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
         let amountStr = Self.currencyFormatter.string(from: NSNumber(value: calculator.earnedToday)) ?? "¥0.00"
         let isWarning = calculator.isInReminderWindow
 
-        let menuFont = NSFont.monospacedDigitSystemFont(ofSize: NSFont.menuBarFont(ofSize: 0).pointSize, weight: .regular)
-        let textColor: NSColor = isWarning ? .systemOrange : .labelColor
-
-        // 根据状态决定显示模式：非工作时段只显示图标+文字，工作时段才显示倒计时+金额
+        // 所有状态统一使用上下两行堆叠布局，减少菜单栏宽度
         switch calculator.state {
         case .weekendOff:
-            applySymbolAndText(button: button, symbol: "cup.and.saucer",
-                               text: Localization.shared.t("menuBarWeekendRest"),
-                               font: menuFont, color: textColor)
+            button?.image = autoreleasepool {
+                makeStackedImage(top: Localization.shared.t("menuBarShortWeekend"),
+                                 bottom: amountStr, isWarning: false)
+            }
+            button?.imagePosition = .imageOnly
+            button?.imageScaling = .scaleProportionallyDown
+            button?.attributedTitle = NSAttributedString(string: "")
         case .beforeWork:
-            applySymbolAndText(button: button, symbol: "sun.max",
-                               text: Localization.shared.t("menuBarBeforeWork"),
-                               font: menuFont, color: textColor)
+            button?.image = autoreleasepool {
+                makeStackedImage(top: Localization.shared.t("menuBarShortBeforeWork"),
+                                 bottom: amountStr, isWarning: false)
+            }
+            button?.imagePosition = .imageOnly
+            button?.imageScaling = .scaleProportionallyDown
+            button?.attributedTitle = NSAttributedString(string: "")
         case .afterWork:
-            applySymbolAndText(button: button, symbol: "checkmark.circle.fill",
-                               text: Localization.shared.t("menuBarAfterWork"),
-                               font: menuFont, color: textColor)
+            button?.image = autoreleasepool {
+                makeStackedImage(top: Localization.shared.t("menuBarShortAfterWork"),
+                                 bottom: amountStr, isWarning: false)
+            }
+            button?.imagePosition = .imageOnly
+            button?.imageScaling = .scaleProportionallyDown
+            button?.attributedTitle = NSAttributedString(string: "")
         case .lunchBreak:
             // 午休时段：上下两行 — 午休中 + 金额
             button?.image = autoreleasepool {

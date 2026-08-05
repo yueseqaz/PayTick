@@ -20,7 +20,7 @@ final class NotificationManager: ObservableObject {
         }
     }
 
-    /// 每秒调用：检查全部 7 种智能提醒条件（基于绝对时间匹配）
+    /// 每秒调用：检查全部 6 种智能提醒条件（基于绝对时间匹配）
     func checkAndFire(calculator: SalaryCalculator, schedule: WorkSchedule) {
         let cfg = schedule.reminderConfig
         let cal = Calendar.current
@@ -55,20 +55,13 @@ final class NotificationManager: ObservableObject {
                      title: L("notifAfternoonTitle"), body: L("notifAfternoonBody"))
         }
 
-        // 5. 下班提醒
-        if cfg.clockOut && minuteOfDay == cfg.clockOutMin {
-            let minsToOff = max(0, schedule.afternoonEndMin - cfg.clockOutMin)
-            fireOnce(.clockOut, icon: "clock.badge.checkmark.fill",
-                     title: L("notifTitle"), body: L("notifBodyMinutes", minsToOff))
-        }
-
-        // 6. 下班了
+        // 5. 下班了
         if cfg.afterWork && minuteOfDay == cfg.afterWorkMin {
             fireOnce(.afterWork, icon: "party.popper.fill",
                      title: L("notifAfterWorkTitle"), body: L("notifAfterWorkBody"))
         }
 
-        // 7. 晚安提醒
+        // 6. 晚安提醒
         if cfg.lateNight && minuteOfDay == cfg.lateNightMin {
             fireOnce(.lateNight, icon: "moon.zzz.fill",
                      title: L("notifLateNightTitle"), body: L("notifLateNightBody"))
@@ -83,7 +76,6 @@ final class NotificationManager: ObservableObject {
             (.preLunch, "fork.knife", L("notifPreLunchTitle"), L("notifPreLunchBody", 60)),
             (.lunchStart, "cup.and.saucer.fill", L("notifLunchTitle"), L("notifLunchBody")),
             (.afternoonStart, "flame.fill", L("notifAfternoonTitle"), L("notifAfternoonBody")),
-            (.clockOut, "clock.badge.checkmark.fill", L("notifTitle"), L("notifBodyMinutes", 5)),
             (.afterWork, "party.popper.fill", L("notifAfterWorkTitle"), L("notifAfterWorkBody")),
             (.lateNight, "moon.zzz.fill", L("notifLateNightTitle"), L("notifLateNightBody")),
         ]
@@ -194,5 +186,5 @@ final class NotificationManager: ObservableObject {
 }
 
 enum ReminderType: String, CaseIterable {
-    case morningStart, preLunch, lunchStart, afternoonStart, clockOut, afterWork, lateNight
+    case morningStart, preLunch, lunchStart, afternoonStart, afterWork, lateNight
 }
