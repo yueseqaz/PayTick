@@ -1,6 +1,5 @@
 import AppKit
 import SwiftUI
-import UserNotifications
 
 final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWindowDelegate {
     private var statusItem: NSStatusItem!
@@ -18,8 +17,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
     let attendanceStore = AttendanceStore()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        notifier.requestAuthorization()
-
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         statusItem.button?.target = self
         statusItem.button?.action = #selector(togglePopover(_:))
