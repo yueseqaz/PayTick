@@ -99,7 +99,29 @@ enum L10n {
         "toolTipUntilOff": "PayTick · %d min until clock-out",
         "notifTitle": "Almost off ⏰",
         "notifBodyMinutes": "%d min %d sec until clock-out — time to wrap up!",
-        "notifBodySeconds": "%d sec until clock-out — go!"
+        "notifBodySeconds": "%d sec until clock-out — go!",
+        "notifMorningTitle": "Good morning ☀️",
+        "notifMorningBody": "A new day begins — let's make it count!",
+        "notifPreLunchTitle": "Lunch soon 🍱",
+        "notifPreLunchBody": "Just %d min until lunch break — time to think about food!",
+        "notifLunchTitle": "Lunch break 🍴",
+        "notifLunchBody": "Time to rest and recharge. Don't skip lunch!",
+        "notifAfternoonTitle": "Afternoon 💪",
+        "notifAfternoonBody": "Back at it — you've got this!",
+        "notifAfterWorkTitle": "Done for today! 🎉",
+        "notifAfterWorkBody": "Great work today — now go enjoy your evening!",
+        "notifLateNightTitle": "It's late 🌙",
+        "notifLateNightBody": "Past midnight — get some rest, you've got work tomorrow.",
+        "smartReminders": "Smart reminders",
+        "reminderMorningStart": "Morning greeting",
+        "reminderPreLunch": "Pre-lunch alert",
+        "reminderLunchStart": "Lunch break",
+        "reminderAfternoonStart": "Afternoon start",
+        "reminderClockOut": "Clock-out alert",
+        "reminderAfterWork": "Done for today",
+        "reminderLateNight": "Late night rest",
+        "preLunchMinutes": "Remind %d min before lunch",
+        "lateNightHourLabel": "After %02d:00"
     ]
 
     static let chineseSimplified: [String: String] = [
@@ -185,7 +207,29 @@ enum L10n {
         "toolTipUntilOff": "PayTick · 距下班 %d 分钟",
         "notifTitle": "快下班了 ⏰",
         "notifBodyMinutes": "还有 %d 分 %d 秒下班，准备收拾东西吧～",
-        "notifBodySeconds": "还有 %d 秒就下班啦，准备冲！"
+        "notifBodySeconds": "还有 %d 秒就下班啦，准备冲！",
+        "notifMorningTitle": "早安 ☀️",
+        "notifMorningBody": "新的一天开始了，今天也要加油！",
+        "notifPreLunchTitle": "快午休了 🍱",
+        "notifPreLunchBody": "还有 %d 分钟午休，记得准备午饭或点外卖哦",
+        "notifLunchTitle": "午休时间到 🍴",
+        "notifLunchBody": "好好休息一下，别跳过午饭～",
+        "notifAfternoonTitle": "下午好 💪",
+        "notifAfternoonBody": "下午开始了，继续加油！",
+        "notifAfterWorkTitle": "下班了！🎉",
+        "notifAfterWorkBody": "今天辛苦了，好好享受下班时光吧！",
+        "notifLateNightTitle": "该休息了 🌙",
+        "notifLateNightBody": "已经过了零点了，早点休息吧，明天还要上班呢。",
+        "smartReminders": "智能提醒",
+        "reminderMorningStart": "早安问候",
+        "reminderPreLunch": "午休预告",
+        "reminderLunchStart": "午休开始",
+        "reminderAfternoonStart": "下午开始",
+        "reminderClockOut": "下班提醒",
+        "reminderAfterWork": "下班了",
+        "reminderLateNight": "晚安提醒",
+        "preLunchMinutes": "午休前 %d 分钟提醒",
+        "lateNightHourLabel": "%02d:00 后提醒"
     ]
 }
 

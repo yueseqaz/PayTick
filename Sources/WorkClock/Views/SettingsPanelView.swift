@@ -67,6 +67,48 @@ struct SettingsPanelView: View {
                     Text(l10n.t("reminderMethodNote"))
                 }
                 Section {
+                    Toggle(isOn: $store.schedule.reminderConfig.morningStart) {
+                        Label(l10n.t("reminderMorningStart"), systemImage: "sun.max")
+                    }
+                    Toggle(isOn: $store.schedule.reminderConfig.preLunch) {
+                        Label(l10n.t("reminderPreLunch"), systemImage: "fork.knife")
+                    }
+                    if store.schedule.reminderConfig.preLunch {
+                        Stepper(l10n.t("preLunchMinutes", store.schedule.reminderConfig.preLunchMinutes),
+                                value: $store.schedule.reminderConfig.preLunchMinutes, in: 15...120, step: 15)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Toggle(isOn: $store.schedule.reminderConfig.lunchStart) {
+                        Label(l10n.t("reminderLunchStart"), systemImage: "cup.and.saucer.fill")
+                    }
+                    Toggle(isOn: $store.schedule.reminderConfig.afternoonStart) {
+                        Label(l10n.t("reminderAfternoonStart"), systemImage: "moon")
+                    }
+                    Toggle(isOn: $store.schedule.reminderConfig.clockOut) {
+                        Label(l10n.t("reminderClockOut"), systemImage: "clock.badge.checkmark.fill")
+                    }
+                    Toggle(isOn: $store.schedule.reminderConfig.afterWork) {
+                        Label(l10n.t("reminderAfterWork"), systemImage: "checkmark.circle.fill")
+                    }
+                    Toggle(isOn: $store.schedule.reminderConfig.lateNight) {
+                        Label(l10n.t("reminderLateNight"), systemImage: "moon.zzz.fill")
+                    }
+                    if store.schedule.reminderConfig.lateNight {
+                        Picker(l10n.t("lateNightHourLabel", store.schedule.reminderConfig.lateNightHour),
+                               selection: $store.schedule.reminderConfig.lateNightHour) {
+                            Text("22:00").tag(22)
+                            Text("23:00").tag(23)
+                            Text("00:00").tag(0)
+                            Text("01:00").tag(1)
+                        }
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    }
+                } header: {
+                    Text(l10n.t("smartReminders"))
+                }
+                Section {
                     Toggle(isOn: $store.schedule.overtimeMode) {
                         Label(l10n.t("overtimeMode"), systemImage: "moon.fill")
                     }
@@ -89,7 +131,7 @@ struct SettingsPanelView: View {
             }
             .padding()
         }
-        .frame(width: 380, height: 620)
+        .frame(width: 380, height: 780)
     }
 
     private func timeRow(title: String, minute: Binding<Int>) -> some View {

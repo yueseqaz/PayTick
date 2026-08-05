@@ -150,7 +150,7 @@ struct MainPanelView: View {
                 EmptyView()
             }
 
-            if let last = notifier.lastReminderDate,
+            if let last = notifier.lastFireDates[ReminderType.clockOut.rawValue],
                Calendar.current.isDateInToday(last) {
                 HStack(spacing: 4) {
                     Image(systemName: "bell.badge.fill")

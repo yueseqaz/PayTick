@@ -205,7 +205,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, ObservableObject, NSWi
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.isReleasedWhenClosed = false
             window.delegate = self
-            centerWindow(window, defaultSize: NSSize(width: 420, height: 520))
+            centerWindow(window, defaultSize: NSSize(width: 420, height: 720))
             settingsWindow = window
         }
         settingsWindow?.makeKeyAndOrderFront(nil)
