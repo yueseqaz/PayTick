@@ -152,11 +152,31 @@ struct AttendanceView: View {
         return LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 4), count: 7), spacing: 4) {
             ForEach(days, id: \.self) { day in
                 DayCellView(day: day, month: displayedMonth, records: store.recordsFor(date: day))
+                    .contentShape(Rectangle())
                     .onTapGesture { editingDay = day }
+                    .contextMenu {
+                        if isCellInMonth(day) && !store.recordsFor(date: day).isEmpty {
+                            Button(role: .destructive) {
+                                clearDay(day)
+                            } label: {
+                                Label(l10n.t("attendanceClearDay"), systemImage: "trash")
+                            }
+                        }
+                    }
             }
         }
         .padding(.horizontal, 8)
         .padding(.vertical, 8)
+    }
+
+    private func isCellInMonth(_ day: Date) -> Bool {
+        Calendar.current.component(.month, from: day) == Calendar.current.component(.month, from: displayedMonth)
+    }
+
+    private func clearDay(_ day: Date) {
+        for r in store.recordsFor(date: day) {
+            store.delete(id: r.id)
+        }
     }
 
     // MARK: - Stats bar
@@ -342,6 +362,8 @@ private struct DayCellView: View {
     let month: Date
     let records: [AttendanceRecord]
 
+    @State private var isHovered = false
+
     private var isInMonth: Bool {
         Calendar.current.component(.month, from: day) == Calendar.current.component(.month, from: month)
     }
@@ -394,8 +416,10 @@ private struct DayCellView: View {
             .padding(4)
             .background(
                 RoundedRectangle(cornerRadius: 6)
-                    .fill(isToday ? Color.accentColor.opacity(0.12) : Color.clear)
+                    .fill(isToday ? Color.accentColor.opacity(0.12)
+                          : (isHovered ? Color(nsColor: .separatorColor).opacity(0.3) : Color.clear))
             )
+            .onHover { isHovered = $0 }
         } else {
             // 非当月：完全空白，仅占位保持网格对齐
             Color.clear
@@ -419,6 +443,7 @@ struct AttendanceDayEditorView: View {
     @State private var hasMorning: Bool = false
     @State private var hasAfternoon: Bool = false
     @State private var showDelete: Bool = false
+    @State private var showClearConfirm: Bool = false
 
     var body: some View {
         VStack(spacing: 0) {
@@ -455,7 +480,6 @@ struct AttendanceDayEditorView: View {
                             }
                         } label: {
                             Label(l10n.t("attendanceDelete"), systemImage: "trash")
-                                .font(.caption)
                         }
                     }
 
@@ -483,7 +507,6 @@ struct AttendanceDayEditorView: View {
                             }
                         } label: {
                             Label(l10n.t("attendanceDelete"), systemImage: "trash")
-                                .font(.caption)
                         }
                     }
 
@@ -495,7 +518,16 @@ struct AttendanceDayEditorView: View {
             .onAppear(perform: loadInitial)
 
             HStack {
+                if hasMorning || hasAfternoon {
+                    Button(role: .destructive) {
+                        showClearConfirm = true
+                    } label: {
+                        Label(l10n.t("attendanceClearDay"), systemImage: "trash")
+                    }
+                }
                 Spacer()
+                Button(l10n.t("attendanceClose")) { dismiss() }
+                    .keyboardShortcut(.cancelAction)
                 Button(l10n.t("attendanceSave")) {
                     saveRecords()
                     dismiss()
@@ -506,6 +538,16 @@ struct AttendanceDayEditorView: View {
             .padding()
         }
         .frame(width: 420, height: 520)
+        .confirmationDialog(
+            l10n.t("attendanceClearDay") + "?",
+            isPresented: $showClearConfirm,
+            titleVisibility: .visible
+        ) {
+            Button(l10n.t("attendanceClearDay"), role: .destructive) {
+                clearAllRecords()
+            }
+            Button(l10n.t("attendanceClose"), role: .cancel) {}
+        }
     }
 
     private var formattedDate: String {
@@ -532,6 +574,19 @@ struct AttendanceDayEditorView: View {
     private func saveRecords() {
         store.upsert(date: day, period: .morning, status: morningStatus, note: morningNote)
         store.upsert(date: day, period: .afternoon, status: afternoonStatus, note: afternoonNote)
+    }
+
+    private func clearAllRecords() {
+        for r in store.recordsFor(date: day) {
+            store.delete(id: r.id)
+        }
+        hasMorning = false
+        hasAfternoon = false
+        morningNote = ""
+        afternoonNote = ""
+        morningStatus = .work
+        afternoonStatus = .work
+        dismiss()
     }
 }
 
